@@ -1,0 +1,36 @@
+name: Release
+
+# Đẩy thẻ dạng v1.2.3 để build bộ cài và tạo bản phát hành nháp trên GitHub.
+on:
+  push:
+    tags: ["v*"]
+
+jobs:
+  release:
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: npm
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+      - run: npm ci
+      - run: npm test
+      - uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Khóa ký bản cập nhật (tạo bằng `npm run tauri signer generate`).
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: Prompter ${{ github.ref_name }}
+          releaseDraft: true
+          # Bật tạo gói cập nhật (.sig và latest.json); cần khóa ký ở trên.
+          args: --config src-tauri/tauri.release.conf.json
