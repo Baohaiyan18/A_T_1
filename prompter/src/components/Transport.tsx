@@ -7,15 +7,15 @@ export function Progress({ prompter }: { prompter: Prompter }) {
   const { progress, secondsLeft } = useStore((s) => s.playback);
   return (
     <div className="prog">
-      <div
+      <progress
         className="track"
+        max={100}
+        value={Number((progress * 100).toFixed(1))}
         onClick={(e) => {
           const r = e.currentTarget.getBoundingClientRect();
           prompter.seekRatio((e.clientX - r.left) / r.width);
         }}
-      >
-        <div style={{ width: `${(progress * 100).toFixed(1)}%` }} />
-      </div>
+      />
       <div className="times">
         <span>{Math.round(progress * 100)}%</span>
         <span>Còn lại: {secondsLeft === null ? "--:--" : mmss(secondsLeft)}</span>

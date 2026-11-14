@@ -25,11 +25,11 @@ describe("sanitizeSettings", () => {
   });
 
   it("giữ giá trị hợp lệ, bổ sung trường thiếu bằng mặc định", () => {
-    expect(sanitizeSettings({ speed: 22.5, mirrorH: true, font: "Tahoma" })).toEqual({
+    expect(sanitizeSettings({ speed: 22.5, mirrorH: true, font: "Roboto" })).toEqual({
       ...DEFAULT_SETTINGS,
       speed: 22.5,
       mirrorH: true,
-      font: "Tahoma",
+      font: "Roboto",
     });
   });
 

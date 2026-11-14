@@ -22,8 +22,11 @@ export function ControlWindow() {
     <div className="ctl">
       <header>
         <div className="brand">
-          Prompter
-          <small>Phần mềm máy nhắc chữ</small>
+          <img className="brand-logo" src="/logo.png" alt="Prompter Logo" />
+          <div className="brand-text">
+            Prompter
+            <small>Phần mềm máy nhắc chữ</small>
+          </div>
         </div>
         <ProjectionBar />
       </header>

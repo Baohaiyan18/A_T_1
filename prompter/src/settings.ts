@@ -28,13 +28,13 @@ export const DEFAULT_SETTINGS: Settings = {
   lineHeight: 1.35,
   margin: 8,
   align: "left",
-  font: "Arial",
+  font: "Roboto",
   mirrorH: false,
   mirrorV: false,
   fg: "#ffffff",
   bg: "#000000",
-  cue: "#ffd400",
-  head: "#4fc3ff",
+  cue: "#ffc337",
+  head: "#00b3e4",
   marker: true,
   markerPos: 30,
   upper: false,
@@ -56,7 +56,7 @@ export const RANGES = {
   markerPos: { min: 10, max: 70, step: 1 },
 } satisfies Record<string, Range>;
 
-export const FONTS = ["Arial", "Segoe UI", "Roboto", "Tahoma", "Verdana", "Times New Roman"];
+export const FONTS = ["Roboto"];
 
 const ALIGNS: Align[] = ["left", "center"];
 const COUNTDOWNS: Countdown[] = [0, 3, 5];

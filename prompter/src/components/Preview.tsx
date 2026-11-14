@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { MouseEvent, Ref } from "react";
 import type { Prompter } from "../hooks/usePrompter";
+import { setClassRule } from "../lib/dynamicSheet";
 import type { Line } from "../script/parse";
 import { useStore } from "../state/store";
 import { Stage } from "./Stage";
@@ -43,6 +44,11 @@ export function Preview({ stageRef, lines, prompter }: Props) {
     };
   }, [outSize]);
 
+  useLayoutEffect(() => {
+    const height = (width * outSize.h) / outSize.w;
+    setClassRule(".pvbox", `width: ${width.toFixed(1)}px; height: ${height.toFixed(1)}px;`);
+  }, [width, outSize.w, outSize.h]);
+
   // Lăn chuột để cuộn tay. Phải gắn trực tiếp vì cần `passive: false` để chặn cuộn trang.
   useEffect(() => {
     const el = box.current;
@@ -67,12 +73,7 @@ export function Preview({ stageRef, lines, prompter }: Props) {
 
   return (
     <div className="pvwrap" ref={wrap}>
-      <div
-        ref={box}
-        className="pvbox"
-        style={{ width, height: (width * outSize.h) / outSize.w }}
-        onClick={onClick}
-      >
+      <div ref={box} className="pvbox" onClick={onClick}>
         <Stage
           ref={stageRef}
           lines={lines}

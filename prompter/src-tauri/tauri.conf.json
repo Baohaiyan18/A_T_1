@@ -19,11 +19,11 @@
         "minWidth": 980,
         "minHeight": 620,
         "maximized": true,
-        "backgroundColor": "#0e1014"
+        "backgroundColor": "#ffffff"
       }
     ],
     "security": {
-      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' ipc: http://ipc.localhost"
+      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data:; connect-src 'self' ipc: http://ipc.localhost"
     }
   },
   "bundle": {

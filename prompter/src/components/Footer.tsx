@@ -26,7 +26,13 @@ function AboutDialog({ info, onClose }: { info: AppInfo | null; onClose: () => v
     // Nhấp ra ngoài hộp thoại để đóng.
     <div className="modal" onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className="dlg" role="dialog" aria-modal="true" aria-labelledby="about-title">
-        <h2 id="about-title">Prompter</h2>
+        <div className="brand">
+          <img className="brand-logo" src="/logo.png" alt="Prompter Logo" />
+          <div className="brand-text">
+            <h2 id="about-title">Prompter</h2>
+            <small>Phần mềm máy nhắc chữ chuyên nghiệp</small>
+          </div>
+        </div>
         <p>
           Phần mềm máy nhắc chữ cho MC: soạn kịch bản, điều khiển tốc độ và chiếu toàn màn hình ra
           màn hình nhắc chữ.

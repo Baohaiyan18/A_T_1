@@ -1,15 +1,29 @@
 .stage {
   position: relative;
   overflow: hidden;
-  background: #000;
+  background: #000000;
   user-select: none;
   -webkit-user-select: none;
+  font-family: var(--font-sans);
 }
 
 .stage .flip {
   position: absolute;
   inset: 0;
   transform-origin: 50% 50%;
+  transform: none;
+}
+
+.stage .flip.mirror-h {
+  transform: scale(-1, 1);
+}
+
+.stage .flip.mirror-v {
+  transform: scale(1, -1);
+}
+
+.stage .flip.mirror-hv {
+  transform: scale(-1, -1);
 }
 
 .stage .scroller {
@@ -23,22 +37,37 @@
 .stage .txt {
   white-space: pre-wrap;
   overflow-wrap: break-word;
+  font-family: var(--font-sans);
   font-weight: 600;
+  text-align: left;
+  text-transform: none;
+}
+
+.stage .txt.align-left {
+  text-align: left;
+}
+
+.stage .txt.align-center {
+  text-align: center;
+}
+
+.stage .txt.upper {
+  text-transform: uppercase;
 }
 
 .stage .ln.head {
-  color: var(--head, #4fc3ff);
-  font-weight: 800;
+  color: var(--head, #00b3e4);
+  font-weight: 700;
 }
 
 .stage .cue {
-  color: var(--cue, #ffd400);
+  color: var(--cue, #ffc337);
   font-style: italic;
   font-weight: 500;
 }
 
 .stage .ln.end {
-  color: #777;
+  color: #94a3b8;
   text-align: center;
   font-size: 0.6em;
   padding-top: 0.6em;
@@ -51,8 +80,12 @@
   transform: translateY(-50%);
   background: rgba(255, 255, 255, 0.06);
   pointer-events: none;
-  border-top: 1px solid rgba(255, 90, 31, 0.35);
-  border-bottom: 1px solid rgba(255, 90, 31, 0.35);
+  border-top: 1px solid rgba(242, 102, 78, 0.45);
+  border-bottom: 1px solid rgba(242, 102, 78, 0.45);
+}
+
+.stage .marker.hide {
+  display: none;
 }
 
 .stage .marker i {
@@ -67,12 +100,12 @@
 
 .stage .marker i:first-child {
   left: 0;
-  border-left: 0.8em solid var(--accent, #ff5a1f);
+  border-left: 0.8em solid var(--logo-coral, #f2664e);
 }
 
 .stage .marker i:last-child {
   right: 0;
-  border-right: 0.8em solid var(--accent, #ff5a1f);
+  border-right: 0.8em solid var(--logo-coral, #f2664e);
 }
 
 .stage .count {
@@ -81,7 +114,13 @@
   display: none;
   align-items: center;
   justify-content: center;
-  color: var(--accent, #ff5a1f);
-  font-weight: 800;
-  background: rgba(0, 0, 0, 0.55);
+  color: var(--logo-amber, #ffc337);
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.stage .count.show {
+  display: flex;
 }

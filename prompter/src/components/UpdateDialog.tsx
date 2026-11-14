@@ -72,9 +72,11 @@ export function UpdateDialog() {
               Đang tải bản cập nhật… {mb(progress.done)} MB
               {progress.total ? ` / ${mb(progress.total)} MB` : ""}
             </p>
-            <div className="track">
-              <div style={{ width: `${percent ?? 100}%`, opacity: percent === null ? 0.4 : 1 }} />
-            </div>
+            <progress
+              className={percent === null ? "track indeterminate" : "track"}
+              max={100}
+              value={percent ?? 100}
+            />
             <p>Phần mềm sẽ tự khởi động lại sau khi cài xong.</p>
           </>
         )}

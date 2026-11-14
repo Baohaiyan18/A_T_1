@@ -1,5 +1,6 @@
 import { memo, useImperativeHandle, useLayoutEffect, useMemo, useRef } from "react";
-import type { CSSProperties, Ref } from "react";
+import type { Ref } from "react";
+import { setClassRule } from "../lib/dynamicSheet";
 import type { Line } from "../script/parse";
 import type { Settings } from "../settings";
 import "./Stage.css";
@@ -64,23 +65,25 @@ const Lines = memo(function Lines({ lines }: { lines: Line[] }) {
 
 export function Stage({ lines, settings: s, scale, mirror = true, className, ref }: Props) {
   const rootRef = useRef<HTMLDivElement>(null);
-  const scrollerRef = useRef<HTMLDivElement>(null);
   const txtRef = useRef<HTMLDivElement>(null);
   const countRef = useRef<HTMLDivElement>(null);
   const posRef = useRef(0);
 
+  const scope = className ? `.stage.${className}` : ".stage";
   const lineH = s.fontSize * scale * s.lineHeight;
   // Giữ thông số mới nhất cho các hàm gọi ngoài chu kỳ render của React.
-  const geo = useRef({ lineH, scale, markerPos: s.markerPos });
+  const geo = useRef({ lineH, scale, markerPos: s.markerPos, scope });
 
   const handle = useMemo<StageHandle>(() => {
     const draw = () => {
       const root = rootRef.current;
-      const scroller = scrollerRef.current;
-      if (!root || !scroller) return;
+      if (!root) return;
       const g = geo.current;
       const off = (root.clientHeight * g.markerPos) / 100 - g.lineH / 2;
-      scroller.style.transform = `translate3d(0,${(off - posRef.current * g.scale).toFixed(2)}px,0)`;
+      setClassRule(
+        `${g.scope} .scroller`,
+        `transform: translate3d(0, ${(off - posRef.current * g.scale).toFixed(2)}px, 0);`,
+      );
     };
     return {
       render(pos) {
@@ -91,11 +94,14 @@ export function Stage({ lines, settings: s, scale, mirror = true, className, ref
         const el = countRef.current;
         const root = rootRef.current;
         if (!el || !root) return;
+        const g = geo.current;
         if (seconds > 0) {
-          el.style.display = "flex";
-          el.style.fontSize = `${root.clientHeight * 0.45}px`;
+          setClassRule(`${g.scope} .count`, `font-size: ${(root.clientHeight * 0.45).toFixed(1)}px;`);
+          el.classList.add("show");
           el.textContent = String(Math.ceil(seconds));
-        } else el.style.display = "none";
+        } else {
+          el.classList.remove("show");
+        }
       },
       maxPos() {
         const txt = txtRef.current;
@@ -112,48 +118,43 @@ export function Stage({ lines, settings: s, scale, mirror = true, className, ref
 
   useImperativeHandle(ref, () => handle, [handle]);
 
-  // Cài đặt đổi thì vẽ lại ngay, không chờ khung hình kế tiếp.
+  // Cài đặt đổi thì cập nhật quy tắc CSS theo class và vẽ lại ngay, không chờ khung hình kế tiếp.
   useLayoutEffect(() => {
-    geo.current = { lineH, scale, markerPos: s.markerPos };
+    geo.current = { lineH, scale, markerPos: s.markerPos, scope };
+    setClassRule(scope, `background: ${s.bg}; --cue: ${s.cue}; --head: ${s.head};`);
+    setClassRule(
+      `${scope} .txt`,
+      `font-size: ${(s.fontSize * scale).toFixed(2)}px; line-height: ${s.lineHeight}; padding: 0 ${s.margin}%; color: ${s.fg};`,
+    );
+    setClassRule(
+      `${scope} .marker`,
+      `top: ${s.markerPos}%; height: ${lineH.toFixed(2)}px; font-size: ${Math.max(8, lineH * 0.5).toFixed(2)}px;`,
+    );
     handle.render(posRef.current);
   });
 
-  const rootStyle = {
-    background: s.bg,
-    "--cue": s.cue,
-    "--head": s.head,
-  } as CSSProperties;
+  const flipClass = !mirror
+    ? "flip"
+    : s.mirrorH && s.mirrorV
+      ? "flip mirror-hv"
+      : s.mirrorH
+        ? "flip mirror-h"
+        : s.mirrorV
+          ? "flip mirror-v"
+          : "flip";
 
-  const txtStyle: CSSProperties = {
-    fontSize: s.fontSize * scale,
-    lineHeight: s.lineHeight,
-    padding: `0 ${s.margin}%`,
-    textAlign: s.align,
-    color: s.fg,
-    fontFamily: `"${s.font}",Arial,sans-serif`,
-    textTransform: s.upper ? "uppercase" : "none",
-  };
-
-  const flipStyle: CSSProperties = {
-    transform: mirror ? `scale(${s.mirrorH ? -1 : 1},${s.mirrorV ? -1 : 1})` : "none",
-  };
-
-  const markerStyle: CSSProperties = {
-    display: s.marker ? undefined : "none",
-    top: `${s.markerPos}%`,
-    height: lineH,
-    fontSize: Math.max(8, lineH * 0.5),
-  };
+  const txtClass = `txt ${s.align === "center" ? "align-center" : "align-left"}${s.upper ? " upper" : ""}`;
+  const markerClass = s.marker ? "marker" : "marker hide";
 
   return (
-    <div ref={rootRef} className={className ? `stage ${className}` : "stage"} style={rootStyle}>
-      <div className="flip" style={flipStyle}>
-        <div ref={scrollerRef} className="scroller">
-          <div ref={txtRef} className="txt" style={txtStyle}>
+    <div ref={rootRef} className={className ? `stage ${className}` : "stage"}>
+      <div className={flipClass}>
+        <div className="scroller">
+          <div ref={txtRef} className={txtClass}>
             <Lines lines={lines} />
           </div>
         </div>
-        <div className="marker" style={markerStyle}>
+        <div className={markerClass}>
           <i />
           <i />
         </div>
