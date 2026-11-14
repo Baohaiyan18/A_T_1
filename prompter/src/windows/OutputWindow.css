@@ -1,0 +1,36 @@
+.out {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  background: #000;
+}
+
+.out.idle {
+  cursor: none;
+}
+
+.out-stage {
+  position: absolute;
+  inset: 0;
+}
+
+.out-hint {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%);
+  background: rgba(20, 22, 28, 0.92);
+  border: 1px solid #333;
+  color: #ddd;
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-size: 15px;
+  text-align: center;
+  transition: opacity 0.6s;
+  z-index: 5;
+}
+
+.out-hint.hide {
+  opacity: 0;
+  pointer-events: none;
+}

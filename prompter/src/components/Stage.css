@@ -1,0 +1,87 @@
+.stage {
+  position: relative;
+  overflow: hidden;
+  background: #000;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.stage .flip {
+  position: absolute;
+  inset: 0;
+  transform-origin: 50% 50%;
+}
+
+.stage .scroller {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  will-change: transform;
+}
+
+.stage .txt {
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  font-weight: 600;
+}
+
+.stage .ln.head {
+  color: var(--head, #4fc3ff);
+  font-weight: 800;
+}
+
+.stage .cue {
+  color: var(--cue, #ffd400);
+  font-style: italic;
+  font-weight: 500;
+}
+
+.stage .ln.end {
+  color: #777;
+  text-align: center;
+  font-size: 0.6em;
+  padding-top: 0.6em;
+}
+
+.stage .marker {
+  position: absolute;
+  left: 0;
+  right: 0;
+  transform: translateY(-50%);
+  background: rgba(255, 255, 255, 0.06);
+  pointer-events: none;
+  border-top: 1px solid rgba(255, 90, 31, 0.35);
+  border-bottom: 1px solid rgba(255, 90, 31, 0.35);
+}
+
+.stage .marker i {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0;
+  height: 0;
+  border-top: 0.45em solid transparent;
+  border-bottom: 0.45em solid transparent;
+}
+
+.stage .marker i:first-child {
+  left: 0;
+  border-left: 0.8em solid var(--accent, #ff5a1f);
+}
+
+.stage .marker i:last-child {
+  right: 0;
+  border-right: 0.8em solid var(--accent, #ff5a1f);
+}
+
+.stage .count {
+  position: absolute;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent, #ff5a1f);
+  font-weight: 800;
+  background: rgba(0, 0, 0, 0.55);
+}
