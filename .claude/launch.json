@@ -1,0 +1,6 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    { "name": "prompter-web", "runtimeExecutable": "npm", "runtimeArgs": ["--prefix", "prompter", "run", "dev"], "port": 1420 }
+  ]
+}
