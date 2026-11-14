@@ -11,6 +11,7 @@ import {
 } from "../bridge/projection";
 import type { MonitorInfo } from "../bridge/projection";
 import { useStore } from "../state/store";
+import { Icon } from "./Icon";
 
 // Chỉ tự chiếu một lần cho mỗi lần mở ứng dụng (StrictMode gắn component hai lần khi dev).
 let autoProjected = false;
@@ -68,17 +69,20 @@ export function ProjectionBar() {
     };
   }, [scan, project]);
 
-  const status = error
-    ? `⚠ ${error}`
+  const statusText = error
+    ? error
     : !open
-      ? "● Chưa chiếu"
+      ? "Chưa chiếu"
       : connected
-        ? `● Đang chiếu (${outSize.w}×${outSize.h})`
-        : "● Đang mở màn chiếu…";
+        ? `Đang chiếu (${outSize.w}×${outSize.h})`
+        : "Đang mở màn chiếu…";
 
   return (
     <>
-      <span className={open && connected && !error ? "pill on" : "pill"}>{status}</span>
+      <span className={open && connected && !error ? "pill on" : error ? "pill err-pill" : "pill"}>
+        {error ? <Icon name="alert-triangle" size={14} /> : <span className="status-dot" />}
+        {statusText}
+      </span>
       <div className="proj">
         <span>Chiếu ra</span>
         <select
@@ -96,8 +100,8 @@ export function ProjectionBar() {
             </option>
           ))}
         </select>
-        <button title="Quét lại màn hình" onClick={() => void scan()}>
-          ⟳
+        <button className="icon-btn" title="Quét lại màn hình" onClick={() => void scan()}>
+          <Icon name="refresh-cw" />
         </button>
         <button
           className="primary"
@@ -106,11 +110,12 @@ export function ProjectionBar() {
             void project(selected?.key ?? null);
           }}
         >
-          {open ? "⇄ Chuyển màn" : "▶ Chiếu"}
+          <Icon name={open ? "arrow-left-right" : "cast"} />
+          {open ? "Chuyển màn" : "Chiếu"}
         </button>
         {open && (
           <button className="stop" onClick={() => void closeOutput()}>
-            ■ Tắt chiếu
+            <Icon name="power-off" /> Tắt chiếu
           </button>
         )}
       </div>

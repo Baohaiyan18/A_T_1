@@ -4,6 +4,7 @@ import { getAppInfo } from "../bridge/appInfo";
 import type { AppInfo } from "../bridge/appInfo";
 import { openStorage } from "../bridge/storage";
 import { noteVersion } from "../state/persist";
+import { Icon } from "./Icon";
 import { UpdateDialog, updater } from "./UpdateDialog";
 
 const UPDATE_CHECK_INTERVAL_MS = 6 * 3600 * 1000;
@@ -50,7 +51,7 @@ function AboutDialog({ info, onClose }: { info: AppInfo | null; onClose: () => v
               void updater.getState().check(true);
             }}
           >
-            ⟳ Kiểm tra cập nhật
+            <Icon name="refresh-cw" /> Kiểm tra cập nhật
           </button>
           <button className="primary" autoFocus onClick={onClose}>
             Đóng
@@ -76,7 +77,7 @@ export function Footer() {
         const appInfo = await getAppInfo();
         setInfo(appInfo);
         if (appInfo && (await noteVersion(await openStorage(), appInfo.version))) {
-          setToast(`✔ Đã cập nhật Prompter lên phiên bản ${appInfo.version}`);
+          setToast(`Đã cập nhật Prompter lên phiên bản ${appInfo.version}`);
           timer = setTimeout(() => setToast(""), TOAST_MS);
         }
       } catch {
@@ -109,16 +110,17 @@ export function Footer() {
       </span>
       <span className="fr">
         <button className="link" onClick={() => void updater.getState().check(true)}>
-          ⟳ Kiểm tra cập nhật
+          <Icon name="refresh-cw" size={14} /> Kiểm tra cập nhật
         </button>
         <button className="link" onClick={() => setAbout(true)}>
-          ⓘ Giới thiệu
+          <Icon name="info" size={14} /> Giới thiệu
         </button>
       </span>
       {about && <AboutDialog info={info} onClose={() => setAbout(false)} />}
       <UpdateDialog />
       {toast && (
         <div className="toast" role="status">
+          <Icon name="check-circle" size={16} />
           {toast}
         </div>
       )}

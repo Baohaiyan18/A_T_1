@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import { openScriptFile, saveScriptFile } from "../bridge/files";
 import type { Prompter } from "../hooks/usePrompter";
 import { useStore } from "../state/store";
+import { Icon } from "./Icon";
 
 export function ScriptEditor({ prompter }: { prompter: Prompter }) {
   const text = useStore((s) => s.text);
@@ -42,13 +43,13 @@ export function ScriptEditor({ prompter }: { prompter: Prompter }) {
       <div className="bar">
         <h3>Kịch bản</h3>
         <button onClick={open} title="Mở file .txt">
-          📂 Mở .txt
+          <Icon name="folder-open" /> Mở .txt
         </button>
         <button onClick={save} title="Lưu kịch bản ra file .txt">
-          💾 Lưu .txt
+          <Icon name="save" /> Lưu .txt
         </button>
         <button onClick={fromCursor} title="Đưa dòng đang đặt con trỏ lên vạch đọc (Ctrl+Enter)">
-          ⤴ Chạy từ con trỏ
+          <Icon name="corner-right-up" /> Chạy từ con trỏ
         </button>
       </div>
       {error && (

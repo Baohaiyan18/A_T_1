@@ -1,6 +1,8 @@
 import { FONTS, RANGES } from "../settings";
 import type { Settings } from "../settings";
 import { useStore } from "../state/store";
+import { ColorPicker } from "./ColorPicker";
+import { Icon } from "./Icon";
 
 type RangeKey = keyof typeof RANGES;
 
@@ -35,8 +37,8 @@ export function SettingsPanel() {
       <div className="grp">
         <div className="row speedrow">
           <label htmlFor="set-speed">Tốc độ chạy</label>
-          <button className="sm" onClick={() => setSpeed(s.speed - 1)}>
-            −
+          <button className="sm icon-btn" title="Giảm tốc độ" onClick={() => setSpeed(s.speed - 1)}>
+            <Icon name="minus" size={14} />
           </button>
           <input
             id="set-speed"
@@ -45,8 +47,8 @@ export function SettingsPanel() {
             value={s.speed}
             onChange={(e) => setSpeed(parseFloat(e.target.value))}
           />
-          <button className="sm" onClick={() => setSpeed(s.speed + 1)}>
-            +
+          <button className="sm icon-btn" title="Tăng tốc độ" onClick={() => setSpeed(s.speed + 1)}>
+            <Icon name="plus" size={14} />
           </button>
           <output>{s.speed.toFixed(1)}</output>
         </div>
@@ -96,10 +98,13 @@ export function SettingsPanel() {
           </select>
         </label>
         {COLORS.map(({ key, label }) => (
-          <label className="opt" key={key}>
-            <span>{label}</span>
-            <input type="color" value={s[key]} onChange={(e) => set(key, e.target.value)} />
-          </label>
+          <ColorPicker
+            key={key}
+            id={key}
+            label={label}
+            value={s[key]}
+            onChange={(hex) => set(key, hex)}
+          />
         ))}
         {CHECKS.map(({ key, label }) => (
           <label className="chk" key={key}>

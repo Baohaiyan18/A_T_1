@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useStore } from "zustand";
 import { updateApi } from "../bridge/update";
 import { createUpdaterStore } from "../state/updater";
+import { Icon } from "./Icon";
 
 /** Trạng thái cập nhật dùng chung cho chân trang và hộp thoại. */
 export const updater = createUpdaterStore(updateApi);
@@ -36,7 +37,11 @@ export function UpdateDialog() {
           </p>
         )}
 
-        {phase === "uptodate" && <p className="ok">✔ Bạn đang dùng phiên bản mới nhất.</p>}
+        {phase === "uptodate" && (
+          <p className="ok">
+            <Icon name="check-circle" size={16} /> Bạn đang dùng phiên bản mới nhất.
+          </p>
+        )}
 
         {phase === "error" && (
           <div className="dlg-err" role="alert">

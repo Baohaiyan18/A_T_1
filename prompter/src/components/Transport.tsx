@@ -1,6 +1,7 @@
 import type { Prompter } from "../hooks/usePrompter";
 import { mmss } from "../lib/format";
 import { useStore } from "../state/store";
+import { Icon } from "./Icon";
 
 /** Thanh tiến độ (nhấp để nhảy vị trí), phần trăm và thời gian còn lại. */
 export function Progress({ prompter }: { prompter: Prompter }) {
@@ -28,27 +29,34 @@ export function Transport({ prompter }: { prompter: Prompter }) {
   const running = useStore((s) => s.playback.running);
   return (
     <div className="transport">
-      <button title="Về đầu (Home)" onClick={() => prompter.cmd({ action: "reset" })}>
-        ⏮
+      <button
+        className="icon-btn"
+        title="Về đầu (Home)"
+        onClick={() => prompter.cmd({ action: "reset" })}
+      >
+        <Icon name="skip-back" size={18} />
       </button>
       <button
+        className="icon-btn"
         title="Lùi 3 dòng (PageUp)"
         onClick={() => prompter.cmd({ action: "lines", value: -3 })}
       >
-        ⏪
+        <Icon name="rewind" size={18} />
       </button>
       <button
         className={running ? "play playing" : "play primary"}
         title="Chạy / Dừng (Space)"
         onClick={() => prompter.cmd({ action: "toggle" })}
       >
-        {running ? "⏸ DỪNG" : "▶ CHẠY"}
+        <Icon name={running ? "pause" : "play"} size={18} />
+        {running ? "DỪNG" : "CHẠY"}
       </button>
       <button
+        className="icon-btn"
         title="Tới 3 dòng (PageDown)"
         onClick={() => prompter.cmd({ action: "lines", value: 3 })}
       >
-        ⏩
+        <Icon name="fast-forward" size={18} />
       </button>
     </div>
   );
