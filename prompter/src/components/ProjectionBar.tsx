@@ -1,4 +1,9 @@
-import { useCallback, useEffect, useState } from "react";
+import { memo, useCallback, useEffect, useState } from "react";
+import { Badge } from "@astryxdesign/core/Badge";
+import { Button } from "@astryxdesign/core/Button";
+import { IconButton } from "@astryxdesign/core/IconButton";
+import { Selector } from "@astryxdesign/core/Selector";
+import { StatusDot } from "@astryxdesign/core/StatusDot";
 import {
   closeOutput,
   listMonitors,
@@ -16,14 +21,17 @@ import { Icon } from "./Icon";
 // Chỉ tự chiếu một lần cho mỗi lần mở ứng dụng (StrictMode gắn component hai lần khi dev).
 let autoProjected = false;
 
+const WINDOW_OPTION = { value: "", label: "Cửa sổ riêng" };
+
 /** Chọn màn hình máy nhắc chữ, bật/chuyển/tắt chiếu và hiển thị trạng thái chiếu. */
-export function ProjectionBar() {
+export const ProjectionBar = memo(function ProjectionBar() {
   const [monitors, setMonitors] = useState<MonitorInfo[]>([]);
   const [error, setError] = useState("");
   const displayKey = useStore((s) => s.displayKey);
   const open = useStore((s) => s.outputOpen);
   const connected = useStore((s) => s.outputConnected);
-  const outSize = useStore((s) => s.outSize);
+  const outW = useStore((s) => s.outSize.w);
+  const outH = useStore((s) => s.outSize.h);
   const selected = pickMonitor(monitors, displayKey);
 
   const project = useCallback(async (key: string | null) => {
@@ -69,56 +77,93 @@ export function ProjectionBar() {
     };
   }, [scan, project]);
 
+  const live = open && connected && !error;
   const statusText = error
     ? error
     : !open
       ? "Chưa chiếu"
       : connected
-        ? `Đang chiếu (${outSize.w}×${outSize.h})`
+        ? `Đang chiếu (${outW}×${outH})`
         : "Đang mở màn chiếu…";
+
+  const options =
+    monitors.length === 0
+      ? [WINDOW_OPTION]
+      : monitors.map((m) => ({ value: m.key, label: monitorLabel(m) }));
 
   return (
     <>
-      <span className={open && connected && !error ? "pill on" : error ? "pill err-pill" : "pill"}>
-        {error ? <Icon name="alert-triangle" size={14} /> : <span className="status-dot" />}
-        {statusText}
+      <span className="proj-status" role="status" aria-live="polite">
+        <Badge
+          variant={error ? "error" : live ? "success" : "neutral"}
+          label={statusText}
+          icon={
+            error ? (
+              <Icon name="alert-triangle" size={14} />
+            ) : (
+              <StatusDot
+                variant={live ? "success" : open ? "warning" : "neutral"}
+                label={statusText}
+                isPulsing={live}
+              />
+            )
+          }
+        />
       </span>
       <div className="proj">
-        <span>Chiếu ra</span>
-        <select
-          title="Chọn màn hình máy nhắc chữ"
+        <span className="proj-label" aria-hidden="true">
+          Chiếu ra
+        </span>
+        <Selector
+          label="Chọn màn hình máy nhắc chữ"
+          isLabelHidden
+          size="md"
+          width={240}
+          options={options}
           value={selected?.key ?? ""}
-          onChange={(e) => {
-            useStore.getState().setDisplayKey(e.target.value);
-            if (open) void project(e.target.value);
+          onChange={(value: string | null) => {
+            const key = value ?? "";
+            useStore.getState().setDisplayKey(key);
+            if (open) void project(key);
           }}
-        >
-          {monitors.length === 0 && <option value="">Cửa sổ riêng</option>}
-          {monitors.map((m) => (
-            <option key={m.key} value={m.key}>
-              {monitorLabel(m)}
-            </option>
-          ))}
-        </select>
-        <button className="icon-btn" title="Quét lại màn hình" onClick={() => void scan()}>
-          <Icon name="refresh-cw" />
-        </button>
-        <button
-          className="primary"
-          onClick={() => {
+        />
+        <IconButton
+          label="Quét lại màn hình"
+          tooltip="Quét lại màn hình"
+          variant="ghost"
+          icon={<Icon name="refresh-cw" />}
+          clickAction={async () => {
+            try {
+              await scan();
+            } catch (err) {
+              setError(String(err));
+            }
+          }}
+        />
+        <Button
+          variant="primary"
+          label={open ? "Chuyển màn" : "Chiếu"}
+          icon={<Icon name={open ? "arrow-left-right" : "cast"} />}
+          clickAction={async () => {
             if (selected) useStore.getState().setDisplayKey(selected.key);
-            void project(selected?.key ?? null);
+            await project(selected?.key ?? null);
           }}
-        >
-          <Icon name={open ? "arrow-left-right" : "cast"} />
-          {open ? "Chuyển màn" : "Chiếu"}
-        </button>
+        />
         {open && (
-          <button className="stop" onClick={() => void closeOutput()}>
-            <Icon name="power-off" /> Tắt chiếu
-          </button>
+          <Button
+            variant="destructive"
+            label="Tắt chiếu"
+            icon={<Icon name="power-off" />}
+            clickAction={async () => {
+              try {
+                await closeOutput();
+              } catch (err) {
+                setError(String(err));
+              }
+            }}
+          />
         )}
       </div>
     </>
   );
-}
+});

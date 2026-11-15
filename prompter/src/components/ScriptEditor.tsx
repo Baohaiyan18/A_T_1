@@ -1,10 +1,12 @@
-import { useRef, useState } from "react";
+import { memo, useRef, useState } from "react";
+import { Banner } from "@astryxdesign/core/Banner";
+import { Button } from "@astryxdesign/core/Button";
 import { openScriptFile, saveScriptFile } from "../bridge/files";
 import type { Prompter } from "../hooks/usePrompter";
 import { useStore } from "../state/store";
 import { Icon } from "./Icon";
 
-export function ScriptEditor({ prompter }: { prompter: Prompter }) {
+export const ScriptEditor = memo(function ScriptEditor({ prompter }: { prompter: Prompter }) {
   const text = useStore((s) => s.text);
   const setText = useStore((s) => s.setText);
   const area = useRef<HTMLTextAreaElement>(null);
@@ -39,26 +41,46 @@ export function ScriptEditor({ prompter }: { prompter: Prompter }) {
   };
 
   return (
-    <section className="card editor">
+    <section className="card editor" aria-labelledby="script-heading">
       <div className="bar">
-        <h3>Kịch bản</h3>
-        <button onClick={open} title="Mở file .txt">
-          <Icon name="folder-open" /> Mở .txt
-        </button>
-        <button onClick={save} title="Lưu kịch bản ra file .txt">
-          <Icon name="save" /> Lưu .txt
-        </button>
-        <button onClick={fromCursor} title="Đưa dòng đang đặt con trỏ lên vạch đọc (Ctrl+Enter)">
-          <Icon name="corner-right-up" /> Chạy từ con trỏ
-        </button>
+        <h3 id="script-heading">Kịch bản</h3>
+        <Button
+          size="sm"
+          label="Mở .txt"
+          tooltip="Mở file .txt"
+          icon={<Icon name="folder-open" size={14} />}
+          clickAction={open}
+        />
+        <Button
+          size="sm"
+          label="Lưu .txt"
+          tooltip="Lưu kịch bản ra file .txt"
+          icon={<Icon name="save" size={14} />}
+          clickAction={save}
+        />
+        <Button
+          size="sm"
+          label="Chạy từ con trỏ"
+          tooltip="Đưa dòng đang đặt con trỏ lên vạch đọc (Ctrl+Enter)"
+          icon={<Icon name="corner-right-up" size={14} />}
+          onClick={fromCursor}
+        />
       </div>
       {error && (
-        <div className="err" role="alert">
-          {error}
+        <div className="editor-banner" role="alert">
+          <Banner
+            status="error"
+            container="section"
+            title="Thao tác tệp thất bại"
+            description={error}
+            isDismissable
+            onDismiss={() => setError("")}
+          />
         </div>
       )}
       <textarea
         ref={area}
+        aria-labelledby="script-heading"
         spellCheck={false}
         placeholder="Dán kịch bản vào đây..."
         value={text}
@@ -76,4 +98,4 @@ export function ScriptEditor({ prompter }: { prompter: Prompter }) {
       </div>
     </section>
   );
-}
+});

@@ -1,4 +1,9 @@
-import { useEffect } from "react";
+import { memo } from "react";
+import { Banner } from "@astryxdesign/core/Banner";
+import { Button } from "@astryxdesign/core/Button";
+import { Dialog, DialogHeader } from "@astryxdesign/core/Dialog";
+import { ProgressBar } from "@astryxdesign/core/ProgressBar";
+import { Spinner } from "@astryxdesign/core/Spinner";
 import { useStore } from "zustand";
 import { updateApi } from "../bridge/update";
 import { createUpdaterStore } from "../state/updater";
@@ -9,43 +14,45 @@ export const updater = createUpdaterStore(updateApi);
 
 const mb = (bytes: number) => (bytes / 1048576).toFixed(1);
 
-export function UpdateDialog() {
+export const UpdateDialog = memo(function UpdateDialog() {
   const { phase, info, error, progress, dialogOpen, check, dismiss, install } = useStore(updater);
 
-  useEffect(() => {
-    if (!dialogOpen) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") dismiss();
-    };
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [dialogOpen, dismiss]);
-
-  if (!dialogOpen) return null;
-
   const percent = progress.total ? Math.min(100, (progress.done / progress.total) * 100) : null;
+  const locked =
+    phase === "checking" ||
+    phase === "downloading" ||
+    (phase === "available" && Boolean(info?.mandatory));
 
   return (
-    <div className="modal" onClick={(e) => e.target === e.currentTarget && dismiss()}>
-      <div className="dlg" role="dialog" aria-modal="true" aria-labelledby="update-title">
-        <h2 id="update-title">Cập nhật phần mềm</h2>
-
+    <Dialog
+      isOpen={dialogOpen}
+      onOpenChange={(open) => {
+        if (!open && !locked) dismiss();
+      }}
+      width={500}
+      purpose={locked ? "required" : "info"}
+    >
+      <DialogHeader
+        title="Cập nhật phần mềm"
+        onOpenChange={locked ? undefined : (open) => !open && dismiss()}
+      />
+      <div className="dlg-body">
         {phase === "checking" && (
-          <p>
-            <span className="spin" />
-            Đang kiểm tra cập nhật…
-          </p>
+          <div className="dlg-status">
+            <Spinner size="md" aria-label="Đang kiểm tra cập nhật" />
+            <span>Đang kiểm tra cập nhật…</span>
+          </div>
         )}
 
         {phase === "uptodate" && (
-          <p className="ok">
+          <p className="dlg-ok">
             <Icon name="check-circle" size={16} /> Bạn đang dùng phiên bản mới nhất.
           </p>
         )}
 
         {phase === "error" && (
-          <div className="dlg-err" role="alert">
-            {error}
+          <div role="alert">
+            <Banner status="error" title="Không thể cập nhật" description={error} />
           </div>
         )}
 
@@ -61,46 +68,49 @@ export function UpdateDialog() {
                 <b>{info.version}</b>
               </div>
             </div>
-            {info.mandatory && <p>Đây là bản bắt buộc cập nhật.</p>}
+            {info.mandatory && <Banner status="warning" title="Đây là bản bắt buộc cập nhật." />}
             {info.notes && (
               <>
-                <p>Có gì mới</p>
-                <pre className="notes">{info.notes}</pre>
+                <p className="dlg-sub">Có gì mới</p>
+                <pre className="dlg-notes">{info.notes}</pre>
               </>
             )}
           </>
         )}
 
         {phase === "downloading" && (
-          <>
+          <div className="dlg-download" role="status" aria-live="polite">
             <p>
               Đang tải bản cập nhật… {mb(progress.done)} MB
               {progress.total ? ` / ${mb(progress.total)} MB` : ""}
             </p>
-            <progress
-              className={percent === null ? "track indeterminate" : "track"}
+            <ProgressBar
+              label="Tiến độ tải bản cập nhật"
+              isLabelHidden
+              value={percent ?? 0}
               max={100}
-              value={percent ?? 100}
+              isIndeterminate={percent === null}
+              hasValueLabel={percent !== null}
             />
             <p>Phần mềm sẽ tự khởi động lại sau khi cài xong.</p>
-          </>
+          </div>
         )}
 
-        <div className="acts">
-          {phase === "error" && <button onClick={() => void check(true)}>Thử lại</button>}
-          {phase === "available" && !info?.mandatory && <button onClick={dismiss}>Để sau</button>}
+        <div className="dlg-acts">
+          {phase === "error" && (
+            <Button variant="secondary" label="Thử lại" onClick={() => void check(true)} />
+          )}
+          {phase === "available" && !info?.mandatory && (
+            <Button variant="secondary" label="Để sau" onClick={dismiss} />
+          )}
           {phase === "available" && (
-            <button className="primary" autoFocus onClick={() => void install()}>
-              Cập nhật ngay
-            </button>
+            <Button variant="primary" label="Cập nhật ngay" onClick={() => void install()} />
           )}
           {(phase === "uptodate" || phase === "error") && (
-            <button className="primary" autoFocus onClick={dismiss}>
-              Đóng
-            </button>
+            <Button variant="primary" label="Đóng" onClick={dismiss} />
           )}
         </div>
       </div>
-    </div>
+    </Dialog>
   );
-}
+});

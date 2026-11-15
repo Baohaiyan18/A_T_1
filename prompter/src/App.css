@@ -1,5 +1,5 @@
 :root {
-  /* 1. Primitive Tokens: 6 sắc màu nguyên bản trích xuất từ Logo */
+  /* 1. Primitive Tokens: 6 sắc màu nguyên bản trích xuất từ Logo (dùng cho trang trí, không dùng cho chữ) */
   --logo-cyan: #00b3e4;
   --logo-indigo: #5664ae;
   --logo-rose: #f05a84;
@@ -7,33 +7,10 @@
   --logo-amber: #ffc337;
   --logo-green: #8fc84f;
 
-  /* 2. Semantic Surface & Text Tokens (Nền trắng tối giản chuẩn Swiss Style) */
-  --bg: #ffffff;
-  --panel: #ffffff;
-  --panel2: #f8fafc;
-  --panel-hover: #f1f5f9;
-  --line: #e2e8f0;
-  --line-strong: #cbd5e1;
-  --text: #0f172a;
-  --muted: #475569;
+  /* 2. Typography Token: Duy nhất 1 font Roboto */
+  --font-sans: "Roboto", "Segoe UI", sans-serif;
 
-  /* 3. Semantic Brand & Status Tokens (Ánh xạ từ bảng màu Logo) */
-  --accent: var(--logo-indigo);
-  --accent-hover: #475498;
-  --accent-cyan: var(--logo-cyan);
-  --accent-rose: var(--logo-rose);
-  --accent-amber: var(--logo-amber);
-  --ok: #2b8a3e;
-  --ok-bg: rgba(143, 200, 79, 0.16);
-  --ok-border: var(--logo-green);
-  --bad: var(--logo-coral);
-  --bad-bg: rgba(242, 102, 78, 0.1);
-  --bad-border: rgba(242, 102, 78, 0.45);
-
-  /* 4. Typography Token: Duy nhất 1 font Roboto */
-  --font-sans: "Roboto", sans-serif;
-
-  /* 5. Geometric Grid Tokens: Hệ lưới 4px / 8px đồng nhất */
+  /* 3. Geometric Grid Tokens: Hệ lưới 4px / 8px đồng nhất */
   --sp-1: 4px;
   --sp-2: 8px;
   --sp-3: 12px;
@@ -41,7 +18,7 @@
   --sp-5: 20px;
   --sp-6: 24px;
 
-  /* 6. Concentric Radius & Border Tokens */
+  /* 4. Concentric Radius & Border Tokens */
   --border-w: 1px;
   --r-xs: 3px;
   --r-sm: 4px;
@@ -49,24 +26,43 @@
   --r-lg: 8px;
   --r-pill: 9999px;
 
-  /* 7. Control Sizing & Elevation Tokens */
+  /* 5. Control Sizing */
   --ctrl-h: 36px;
   --ctrl-h-sm: 28px;
-  --ctrl-h-lg: 40px;
-  --shadow-card: 0 1px 3px rgba(15, 23, 42, 0.04), 0 1px 2px rgba(15, 23, 42, 0.02);
-  --shadow-dlg: 0 20px 48px rgba(15, 23, 42, 0.16), 0 4px 12px rgba(15, 23, 42, 0.06);
 
-  /* 8. Animate UI Motion Tokens */
+  /* 6. Motion Tokens */
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --ease-soft: cubic-bezier(0.215, 0.61, 0.355, 1);
   --ease-color: cubic-bezier(0.25, 0.1, 0.25, 1);
-  --scale-press: 0.97;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  :root {
-    --scale-press: 1;
-  }
+/*
+ * Cầu nối token: các token ngữ nghĩa của ứng dụng ánh xạ sang token của Meta Astryx.
+ * Khai báo trên phần tử bọc theme (và cả các portal của Dialog/Popover) để tự đổi theo chế độ Sáng/Tối.
+ */
+[data-astryx-theme] {
+  --font-family-body: var(--font-sans);
+  --font-family-heading: var(--font-sans);
+
+  --bg: var(--color-background-body);
+  --panel: var(--color-background-surface);
+  --panel2: var(--color-background-muted);
+  --panel-hover: var(--color-overlay-hover);
+  --line: var(--color-border);
+  --line-strong: var(--color-border-emphasized);
+  --text: var(--color-text-primary);
+  --muted: var(--color-text-secondary);
+
+  --accent: var(--color-text-accent);
+  --focus-ring: var(--color-accent);
+  --ok: var(--color-text-success);
+  --ok-bg: var(--color-success-muted);
+  --bad: var(--color-text-error);
+  --bad-bg: var(--color-error-muted);
+  --bad-border: var(--color-border-error);
+
+  --shadow-card: 0 1px 3px var(--color-shadow);
+  --shadow-dlg: 0 20px 48px var(--color-shadow);
 }
 
 *,
@@ -80,8 +76,6 @@ body,
 #root {
   margin: 0;
   height: 100%;
-  background: var(--bg);
-  color: var(--text);
   font-family: var(--font-sans);
   font-size: 14px;
   line-height: 1.5;
@@ -89,12 +83,6 @@ body,
   -moz-osx-font-smoothing: grayscale;
 }
 
-button,
-input,
-select,
-textarea,
-kbd,
-code,
-pre {
-  font-family: var(--font-sans);
+#root > [data-astryx-theme] {
+  height: 100%;
 }

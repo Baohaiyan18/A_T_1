@@ -1,5 +1,8 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import type { PointerEvent as ReactPointerEvent } from "react";
+import { memo, useEffect, useLayoutEffect, useRef, useState } from "react";
+import type { KeyboardEvent as ReactKeyboardEvent, PointerEvent as ReactPointerEvent } from "react";
+import { Button } from "@astryxdesign/core/Button";
+import { Popover } from "@astryxdesign/core/Popover";
+import { Selector } from "@astryxdesign/core/Selector";
 import { clamp } from "../lib/clamp";
 import {
   DEFAULT_SAVED_COLORS,
@@ -17,6 +20,10 @@ import { setClassRule } from "../lib/dynamicSheet";
 import "./ColorPicker.css";
 
 const SAVED_COLORS_KEY = "prompter.savedColors";
+const MODE_OPTIONS = [
+  { value: "hex", label: "Hex" },
+  { value: "rgb", label: "RGB" },
+];
 
 function loadSavedColors(): string[] {
   try {
@@ -43,13 +50,14 @@ function persistSavedColors(colors: string[]): void {
   }
 }
 
-function HexagonPalette({
-  value,
-  onPick,
-}: {
-  value: string;
-  onPick: (hex: string) => void;
-}) {
+const onCellKey = (e: ReactKeyboardEvent, pick: () => void) => {
+  if (e.key === "Enter" || e.key === " ") {
+    e.preventDefault();
+    pick();
+  }
+};
+
+function HexagonPalette({ value, onPick }: { value: string; onPick: (hex: string) => void }) {
   return (
     <div className="cp-card cp-hex-card">
       <svg
@@ -64,12 +72,14 @@ function HexagonPalette({
             <g
               key={`${cell.q},${cell.r}`}
               className="cp-hex-cell"
+              role="option"
+              tabIndex={0}
+              aria-selected={active}
+              aria-label={`Chọn màu ${cell.color.toUpperCase()}`}
               onClick={() => onPick(cell.color)}
+              onKeyDown={(e) => onCellKey(e, () => onPick(cell.color))}
             >
-              <polygon
-                points={hexPoints(cell.x, cell.y, HEX_RADIUS + 0.35)}
-                fill={cell.color}
-              />
+              <polygon points={hexPoints(cell.x, cell.y, HEX_RADIUS + 0.35)} fill={cell.color} />
               {active && (
                 <polygon
                   points={hexPoints(cell.x, cell.y, HEX_RADIUS * 0.68)}
@@ -87,12 +97,22 @@ function HexagonPalette({
         <svg
           className="cp-gray-svg"
           viewBox="-12 -12 138 39"
+          role="listbox"
           aria-label="Dải màu xám lục giác"
         >
           {GRAY_CELLS.map((cell, i) => {
             const active = cell.color === value;
             return (
-              <g key={i} className="cp-hex-cell" onClick={() => onPick(cell.color)}>
+              <g
+                key={i}
+                className="cp-hex-cell"
+                role="option"
+                tabIndex={0}
+                aria-selected={active}
+                aria-label={`Chọn sắc xám ${cell.color.toUpperCase()}`}
+                onClick={() => onPick(cell.color)}
+                onKeyDown={(e) => onCellKey(e, () => onPick(cell.color))}
+              >
                 <polygon
                   points={hexPoints(cell.x, cell.y, HEX_RADIUS + 0.25)}
                   fill={cell.color}
@@ -112,13 +132,12 @@ function HexagonPalette({
           })}
         </svg>
 
-        <svg className="cp-preview-hex" viewBox="-22 -22 44 44" aria-label="Màu đang chọn">
-          <polygon
-            points={hexPoints(0, 0, 20)}
-            fill={value}
-            stroke="#cbd5e1"
-            strokeWidth={1}
-          />
+        <svg
+          className="cp-preview-hex"
+          viewBox="-22 -22 44 44"
+          aria-label={`Màu đang chọn ${value.toUpperCase()}`}
+        >
+          <polygon points={hexPoints(0, 0, 20)} fill={value} stroke="#cbd5e1" strokeWidth={1} />
           <polygon
             points={hexPoints(0, 0, 15.5)}
             fill="none"
@@ -138,15 +157,13 @@ interface Props {
   onChange: (hex: string) => void;
 }
 
-export function ColorPicker({ id, label, value, onChange }: Props) {
+export const ColorPicker = memo(function ColorPicker({ id, label, value, onChange }: Props) {
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<"hex" | "rgb">("hex");
   const [hsv, setHsv] = useState(() => hexToHsv(value));
   const [draft, setDraft] = useState(() => value.slice(1).toUpperCase());
   const [savedColors, setSavedColors] = useState<string[]>(loadSavedColors);
 
-  const btnRef = useRef<HTMLButtonElement>(null);
-  const popRef = useRef<HTMLDivElement>(null);
   const svRef = useRef<HTMLDivElement>(null);
   const hueRef = useRef<HTMLDivElement>(null);
 
@@ -173,53 +190,6 @@ export function ColorPicker({ id, label, value, onChange }: Props) {
       `--cp-val: ${normalizedValue}; --cp-hue: ${pureHueHex}; --cp-sv-x: ${(hsv.s * 100).toFixed(1)}%; --cp-sv-y: ${((1 - hsv.v) * 100).toFixed(1)}%; --cp-hue-x: ${((hsv.h / 360) * 100).toFixed(1)}%;`,
     );
   }, [scopeClass, normalizedValue, pureHueHex, hsv.s, hsv.v, hsv.h]);
-
-  useLayoutEffect(() => {
-    if (!open) return;
-    const updatePosition = () => {
-      const btn = btnRef.current;
-      const pop = popRef.current;
-      if (!btn || !pop) return;
-      const bRect = btn.getBoundingClientRect();
-      const pRect = pop.getBoundingClientRect();
-      const pad = 12;
-
-      let top = bRect.top - pRect.height - 8;
-      if (top < pad) {
-        top = Math.min(window.innerHeight - pRect.height - pad, bRect.bottom + 8);
-      }
-      top = Math.max(pad, top);
-
-      const left = clamp(
-        bRect.right - pRect.width,
-        pad,
-        Math.max(pad, window.innerWidth - pRect.width - pad),
-      );
-      setClassRule(`.${scopeClass}.cp-pop`, `top: ${top.toFixed(0)}px; left: ${left.toFixed(0)}px;`);
-    };
-
-    updatePosition();
-    window.addEventListener("resize", updatePosition);
-    return () => window.removeEventListener("resize", updatePosition);
-  }, [open, scopeClass]);
-
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setOpen(false);
-    };
-    const onMouseDown = (e: MouseEvent) => {
-      const target = e.target as Node;
-      if (popRef.current?.contains(target) || btnRef.current?.contains(target)) return;
-      setOpen(false);
-    };
-    document.addEventListener("keydown", onKey);
-    document.addEventListener("mousedown", onMouseDown);
-    return () => {
-      document.removeEventListener("keydown", onKey);
-      document.removeEventListener("mousedown", onMouseDown);
-    };
-  }, [open]);
 
   const applyHsv = (nextH: number, nextS: number, nextV: number) => {
     setHsv({ h: nextH, s: nextS, v: nextV });
@@ -256,6 +226,40 @@ export function ColorPicker({ id, label, value, onChange }: Props) {
     applyHsv(clamp(((e.clientX - r.left) / r.width) * 360, 0, 360), hsv.s, hsv.v);
   };
 
+  const onSvKeyDown = (e: ReactKeyboardEvent<HTMLDivElement>) => {
+    const step = e.shiftKey ? 0.1 : 0.02;
+    if (e.key === "ArrowLeft") {
+      e.preventDefault();
+      applyHsv(hsv.h, clamp(hsv.s - step, 0, 1), hsv.v);
+    } else if (e.key === "ArrowRight") {
+      e.preventDefault();
+      applyHsv(hsv.h, clamp(hsv.s + step, 0, 1), hsv.v);
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      applyHsv(hsv.h, hsv.s, clamp(hsv.v + step, 0, 1));
+    } else if (e.key === "ArrowDown") {
+      e.preventDefault();
+      applyHsv(hsv.h, hsv.s, clamp(hsv.v - step, 0, 1));
+    }
+  };
+
+  const onHueKeyDown = (e: ReactKeyboardEvent<HTMLDivElement>) => {
+    const step = e.shiftKey ? 15 : 3;
+    if (e.key === "ArrowLeft" || e.key === "ArrowDown") {
+      e.preventDefault();
+      applyHsv(clamp(hsv.h - step, 0, 360), hsv.s, hsv.v);
+    } else if (e.key === "ArrowRight" || e.key === "ArrowUp") {
+      e.preventDefault();
+      applyHsv(clamp(hsv.h + step, 0, 360), hsv.s, hsv.v);
+    } else if (e.key === "Home") {
+      e.preventDefault();
+      applyHsv(0, hsv.s, hsv.v);
+    } else if (e.key === "End") {
+      e.preventDefault();
+      applyHsv(360, hsv.s, hsv.v);
+    }
+  };
+
   const handleDraftChange = (raw: string) => {
     setDraft(raw);
     const parsed = mode === "hex" ? normalizeHex(raw) : parseRgbInput(raw);
@@ -285,115 +289,139 @@ export function ColorPicker({ id, label, value, onChange }: Props) {
     persistSavedColors(next);
   };
 
-  return (
-    <div className={`opt ${scopeClass}`}>
-      <span>{label}</span>
-      <button
-        ref={btnRef}
-        type="button"
-        className="cp-trigger"
-        title={`Chọn ${label.toLowerCase()}`}
-        onClick={() => setOpen((o) => !o)}
-      >
-        <span className="cp-trigger-swatch" />
-        <span className="cp-trigger-code">{normalizedValue.toUpperCase()}</span>
-      </button>
-
-      {open && (
+  const popoverContent = (
+    <div className={`cp-pop-content ${scopeClass}`}>
+      <div className="cp-card">
         <div
-          ref={popRef}
-          className={`cp-pop ${scopeClass}`}
-          role="dialog"
-          aria-label={`Bảng chọn ${label}`}
+          ref={svRef}
+          className="cp-sv"
+          role="slider"
+          tabIndex={0}
+          aria-label="Độ bão hòa và độ sáng"
+          aria-valuetext={`Bão hòa ${Math.round(hsv.s * 100)}%, độ sáng ${Math.round(hsv.v * 100)}%`}
+          onKeyDown={onSvKeyDown}
+          onPointerDown={(e) => {
+            e.currentTarget.setPointerCapture(e.pointerId);
+            updateSvFromPointer(e);
+          }}
+          onPointerMove={(e) => {
+            if (e.currentTarget.hasPointerCapture(e.pointerId)) updateSvFromPointer(e);
+          }}
         >
-          <div className="cp-card">
-            <div
-              ref={svRef}
-              className="cp-sv"
-              onPointerDown={(e) => {
-                e.currentTarget.setPointerCapture(e.pointerId);
-                updateSvFromPointer(e);
-              }}
-              onPointerMove={(e) => {
-                if (e.currentTarget.hasPointerCapture(e.pointerId)) updateSvFromPointer(e);
-              }}
-            >
-              <div className="cp-sv-white" />
-              <div className="cp-sv-black" />
-              <div className="cp-sv-thumb" />
-            </div>
-
-            <div
-              ref={hueRef}
-              className="cp-hue"
-              onPointerDown={(e) => {
-                e.currentTarget.setPointerCapture(e.pointerId);
-                updateHueFromPointer(e);
-              }}
-              onPointerMove={(e) => {
-                if (e.currentTarget.hasPointerCapture(e.pointerId)) updateHueFromPointer(e);
-              }}
-            >
-              <div className="cp-hue-thumb" />
-            </div>
-
-            <div className="cp-inputs">
-              <select
-                className="cp-mode"
-                value={mode}
-                aria-label="Định dạng mã màu"
-                onChange={(e) => setMode(e.target.value as "hex" | "rgb")}
-              >
-                <option value="hex">Hex</option>
-                <option value="rgb">RGB</option>
-              </select>
-
-              <label className="cp-hex-box">
-                {mode === "hex" && <span className="cp-hash">#</span>}
-                <input
-                  type="text"
-                  className="cp-hex-input"
-                  value={draft}
-                  spellCheck={false}
-                  onChange={(e) => handleDraftChange(e.target.value)}
-                  onBlur={commitDraft}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") commitDraft();
-                  }}
-                />
-              </label>
-            </div>
-
-            <div className="cp-saved-hdr">
-              <span>Saved colors:</span>
-              <button type="button" className="cp-add-btn" onClick={addSavedColor}>
-                + Add
-              </button>
-            </div>
-
-            <div className="cp-swatches">
-              {savedColors.map((c, idx) => {
-                const active = c.toLowerCase() === normalizedValue;
-                return (
-                  <button
-                    key={`${c}-${idx}`}
-                    type="button"
-                    className={active ? "cp-swatch active" : "cp-swatch"}
-                    title={c.toUpperCase()}
-                    onClick={() => pickHex(c)}
-                  >
-                    <svg viewBox="0 0 24 24" className="cp-swatch-svg" aria-hidden="true">
-                      <circle cx="12" cy="12" r="12" fill={c} />
-                    </svg>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          <HexagonPalette value={normalizedValue} onPick={pickHex} />
+          <div className="cp-sv-white" />
+          <div className="cp-sv-black" />
+          <div className="cp-sv-thumb" />
         </div>
-      )}
+
+        <div
+          ref={hueRef}
+          className="cp-hue"
+          role="slider"
+          tabIndex={0}
+          aria-label="Sắc độ màu"
+          aria-valuemin={0}
+          aria-valuemax={360}
+          aria-valuenow={Math.round(hsv.h)}
+          onKeyDown={onHueKeyDown}
+          onPointerDown={(e) => {
+            e.currentTarget.setPointerCapture(e.pointerId);
+            updateHueFromPointer(e);
+          }}
+          onPointerMove={(e) => {
+            if (e.currentTarget.hasPointerCapture(e.pointerId)) updateHueFromPointer(e);
+          }}
+        >
+          <div className="cp-hue-thumb" />
+        </div>
+
+        <div className="cp-inputs">
+          <Selector
+            label="Định dạng mã màu"
+            isLabelHidden
+            size="md"
+            width={82}
+            options={MODE_OPTIONS}
+            value={mode}
+            onChange={(v: string | null) => {
+              if (v === "hex" || v === "rgb") setMode(v);
+            }}
+          />
+
+          <label className="cp-hex-box">
+            {mode === "hex" && (
+              <span className="cp-hash" aria-hidden="true">
+                #
+              </span>
+            )}
+            <input
+              type="text"
+              className="cp-hex-input"
+              aria-label={mode === "hex" ? "Mã màu Hex" : "Mã màu RGB"}
+              value={draft}
+              spellCheck={false}
+              onChange={(e) => handleDraftChange(e.target.value)}
+              onBlur={commitDraft}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") commitDraft();
+              }}
+            />
+          </label>
+        </div>
+
+        <div className="cp-saved-hdr">
+          <span>Màu đã lưu</span>
+          <Button size="sm" variant="ghost" label="+ Lưu" onClick={addSavedColor} />
+        </div>
+
+        <div className="cp-swatches">
+          {savedColors.map((c, idx) => {
+            const active = c.toLowerCase() === normalizedValue;
+            return (
+              <button
+                key={`${c}-${idx}`}
+                type="button"
+                className={active ? "cp-swatch active" : "cp-swatch"}
+                title={c.toUpperCase()}
+                aria-label={`Chọn màu ${c.toUpperCase()}`}
+                aria-pressed={active}
+                onClick={() => pickHex(c)}
+              >
+                <svg viewBox="0 0 24 24" className="cp-swatch-svg" aria-hidden="true">
+                  <circle cx="12" cy="12" r="12" fill={c} />
+                </svg>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <HexagonPalette value={normalizedValue} onPick={pickHex} />
     </div>
   );
-}
+
+  return (
+    <div className={`opt ${scopeClass}`}>
+      <span className="opt-label">{label}</span>
+      <Popover
+        isOpen={open}
+        onOpenChange={setOpen}
+        placement="above"
+        alignment="end"
+        padding={3}
+        label={`Bảng chọn ${label}`}
+        content={popoverContent}
+      >
+        <button
+          type="button"
+          className="cp-trigger"
+          aria-label={`Chọn ${label.toLowerCase()}, đang chọn ${normalizedValue.toUpperCase()}`}
+          aria-haspopup="dialog"
+          aria-expanded={open}
+        >
+          <span className="cp-trigger-swatch" />
+          <span className="cp-trigger-code">{normalizedValue.toUpperCase()}</span>
+        </button>
+      </Popover>
+    </div>
+  );
+});

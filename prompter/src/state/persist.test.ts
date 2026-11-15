@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Storage } from "../bridge/storage";
 import { SAMPLE_SCRIPT } from "../script/parse";
 import { DEFAULT_SETTINGS, sanitizeSettings } from "../settings";
@@ -15,7 +15,12 @@ function memoryStorage(initial: Record<string, unknown> = {}) {
 }
 
 beforeEach(() => {
+  vi.useFakeTimers();
   useStore.setState({ settings: DEFAULT_SETTINGS, text: "" });
+});
+
+afterEach(() => {
+  vi.useRealTimers();
 });
 
 describe("sanitizeSettings", () => {
@@ -50,33 +55,50 @@ describe("sanitizeSettings", () => {
 
 describe("initPersistence", () => {
   it("lần đầu dùng cài đặt mặc định và kịch bản mẫu", async () => {
-    await initPersistence(memoryStorage().storage);
+    const stop = await initPersistence(memoryStorage().storage);
     expect(useStore.getState().settings).toEqual(DEFAULT_SETTINGS);
     expect(useStore.getState().text).toBe(SAMPLE_SCRIPT);
+    stop();
   });
 
   it("nạp lại dữ liệu đã lưu, kể cả kịch bản rỗng", async () => {
     const { storage } = memoryStorage({ settings: { speed: 30 }, script: "" });
-    await initPersistence(storage);
+    const stop = await initPersistence(storage);
     expect(useStore.getState().settings.speed).toBe(30);
     expect(useStore.getState().text).toBe("");
+    stop();
   });
 
-  it("ghi lại khi cài đặt hoặc kịch bản thay đổi", async () => {
+  it("ghi lại khi cài đặt hoặc kịch bản thay đổi (kịch bản có debounce)", async () => {
     const { storage, data } = memoryStorage();
-    await initPersistence(storage);
+    const stop = await initPersistence(storage);
     expect(data.size).toBe(0);
 
+    useStore.getState().setText("Xin");
     useStore.getState().setText("Xin chào");
     useStore.getState().setSpeed(15);
-    expect(data.get("script")).toBe("Xin chào");
     expect(data.get("settings")).toEqual({ ...DEFAULT_SETTINGS, speed: 15 });
+    expect(data.has("script")).toBe(false);
+
+    vi.advanceTimersByTime(450);
+    expect(data.get("script")).toBe("Xin chào");
+    stop();
+  });
+
+  it("xả kịch bản đang chờ lưu khi dừng theo dõi", async () => {
+    const { storage, data } = memoryStorage();
+    const stop = await initPersistence(storage);
+    useStore.getState().setText("Lưu gấp");
+    expect(data.has("script")).toBe(false);
+    stop();
+    expect(data.get("script")).toBe("Lưu gấp");
   });
 
   it("không ghi khi chỉ thông tin chạy chữ thay đổi", async () => {
     const { storage, data } = memoryStorage();
-    await initPersistence(storage);
+    const stop = await initPersistence(storage);
     useStore.getState().setPlayback({ running: true, progress: 0.5, secondsLeft: 10 });
     expect(data.size).toBe(0);
+    stop();
   });
 });

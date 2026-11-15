@@ -1,5 +1,5 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import type { MouseEvent, Ref } from "react";
+import { memo, useEffect, useLayoutEffect, useRef, useState } from "react";
+import type { KeyboardEvent, MouseEvent, Ref } from "react";
 import type { Prompter } from "../hooks/usePrompter";
 import { setClassRule } from "../lib/dynamicSheet";
 import type { Line } from "../script/parse";
@@ -14,7 +14,7 @@ interface Props {
 }
 
 /** Khung xem trước: cùng nội dung với màn chiếu, thu nhỏ đúng tỉ lệ, không lật gương. */
-export function Preview({ stageRef, lines, prompter }: Props) {
+export const Preview = memo(function Preview({ stageRef, lines, prompter }: Props) {
   const settings = useStore((s) => s.settings);
   const outSize = useStore((s) => s.outSize);
   const wrap = useRef<HTMLDivElement>(null);
@@ -30,17 +30,27 @@ export function Preview({ stageRef, lines, prompter }: Props) {
   useEffect(() => {
     const el = wrap.current;
     if (!el) return;
-    const layout = () => {
-      const maxH = Math.max(180, window.innerHeight * 0.42);
-      setWidth(Math.max(1, Math.min(el.clientWidth, (maxH * outSize.w) / outSize.h)));
+    const fit = (cw: number, ch: number) => {
+      if (cw <= 0 || ch <= 0) return;
+      setWidth(Math.max(1, Math.min(cw, (ch * outSize.w) / outSize.h)));
     };
-    const ro = new ResizeObserver(layout);
+    const readContentBox = () => {
+      const cs = getComputedStyle(el);
+      const px = parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight);
+      const py = parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom);
+      fit(el.clientWidth - px, el.clientHeight - py);
+    };
+    const ro = new ResizeObserver((entries) => {
+      const rect = entries[0]?.contentRect;
+      if (rect) fit(rect.width, rect.height);
+      else readContentBox();
+    });
     ro.observe(el);
-    window.addEventListener("resize", layout);
-    layout();
+    window.addEventListener("resize", readContentBox);
+    readContentBox();
     return () => {
       ro.disconnect();
-      window.removeEventListener("resize", layout);
+      window.removeEventListener("resize", readContentBox);
     };
   }, [outSize]);
 
@@ -71,9 +81,29 @@ export function Preview({ stageRef, lines, prompter }: Props) {
     });
   };
 
+  const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === "ArrowUp") {
+      e.preventDefault();
+      e.stopPropagation();
+      prompter.cmd({ action: "lines", value: -1 });
+    } else if (e.key === "ArrowDown") {
+      e.preventDefault();
+      e.stopPropagation();
+      prompter.cmd({ action: "lines", value: 1 });
+    }
+  };
+
   return (
     <div className="pvwrap" ref={wrap}>
-      <div ref={box} className="pvbox" onClick={onClick}>
+      <div
+        ref={box}
+        className="pvbox"
+        role="region"
+        aria-label="Khung xem trước kịch bản (nhấp để nhảy dòng, lăn chuột hoặc dùng phím mũi tên để cuộn)"
+        tabIndex={0}
+        onClick={onClick}
+        onKeyDown={onKeyDown}
+      >
         <Stage
           ref={stageRef}
           lines={lines}
@@ -85,4 +115,4 @@ export function Preview({ stageRef, lines, prompter }: Props) {
       </div>
     </div>
   );
-}
+});

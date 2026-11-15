@@ -151,10 +151,17 @@ export function usePrompter(stage: RefObject<StageHandle | null>): Prompter {
   // Phím tắt của màn điều khiển.
   useEffect(() => {
     const onKey = (ev: KeyboardEvent) => {
-      // Đang gõ kịch bản hoặc chỉnh ô nhập thì không bắt phím tắt.
-      if (ev.target instanceof Element && ev.target.closest("textarea,input,select")) return;
-      // Đang mở hộp thoại thì không điều khiển chạy chữ (hộp thoại tự xử lý Esc).
-      if (document.querySelector(".modal")) return;
+      if (ev.defaultPrevented) return;
+      // Đang gõ kịch bản hoặc chỉnh ô nhập / bộ chọn / thanh trượt thì không bắt phím tắt.
+      if (
+        ev.target instanceof Element &&
+        ev.target.closest(
+          "textarea,input,select,[role='combobox'],[role='listbox'],[role='slider'],[role='radiogroup'],[role='dialog']",
+        )
+      )
+        return;
+      // Đang mở hộp thoại hoặc popover thì không điều khiển chạy chữ (hộp thoại tự xử lý Esc).
+      if (document.querySelector(".modal, dialog[open], [role='dialog']")) return;
       if (ev.ctrlKey || ev.altKey || ev.metaKey) return;
       const action = resolveKey(ev.key, ev.shiftKey);
       if (!action) return;

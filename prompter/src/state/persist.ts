@@ -6,12 +6,22 @@ import { useStore } from "./store";
 const KEY_SETTINGS = "settings";
 const KEY_SCRIPT = "script";
 const KEY_DISPLAY = "display";
+const SCRIPT_PERSIST_DEBOUNCE_MS = 400;
+
+export interface PersistOptions {
+  /** Trễ lưu kịch bản (ms) để tránh ghi đĩa mỗi lần gõ phím. */
+  scriptDebounceMs?: number;
+}
 
 /**
  * Nạp cài đặt, kịch bản và màn hình đã chọn vào store, rồi ghi lại mỗi khi chúng thay đổi.
  * Chưa có gì được lưu thì dùng cài đặt mặc định và kịch bản mẫu.
  */
-export async function initPersistence(storage: Storage): Promise<void> {
+export async function initPersistence(
+  storage: Storage,
+  options: PersistOptions = {},
+): Promise<() => void> {
+  const debounceMs = options.scriptDebounceMs ?? SCRIPT_PERSIST_DEBOUNCE_MS;
   const [rawSettings, rawText, rawDisplay] = await Promise.all([
     storage.get(KEY_SETTINGS),
     storage.get(KEY_SCRIPT),
@@ -23,11 +33,47 @@ export async function initPersistence(storage: Storage): Promise<void> {
     displayKey: typeof rawDisplay === "string" ? rawDisplay : null,
   });
 
-  useStore.subscribe((state, prev) => {
+  let scriptTimer: ReturnType<typeof setTimeout> | undefined;
+  let pendingText: string | undefined;
+
+  const flushScript = () => {
+    if (scriptTimer === undefined) return;
+    clearTimeout(scriptTimer);
+    scriptTimer = undefined;
+    if (pendingText !== undefined) {
+      const value = pendingText;
+      pendingText = undefined;
+      void storage.set(KEY_SCRIPT, value);
+    }
+  };
+
+  const unsubscribe = useStore.subscribe((state, prev) => {
     if (state.settings !== prev.settings) void storage.set(KEY_SETTINGS, state.settings);
-    if (state.text !== prev.text) void storage.set(KEY_SCRIPT, state.text);
     if (state.displayKey !== prev.displayKey) void storage.set(KEY_DISPLAY, state.displayKey);
+    if (state.text !== prev.text) {
+      if (debounceMs <= 0) {
+        void storage.set(KEY_SCRIPT, state.text);
+      } else {
+        clearTimeout(scriptTimer);
+        pendingText = state.text;
+        scriptTimer = setTimeout(flushScript, debounceMs);
+      }
+    }
   });
+
+  if (typeof window !== "undefined") {
+    window.addEventListener("pagehide", flushScript);
+    window.addEventListener("beforeunload", flushScript);
+  }
+
+  return () => {
+    flushScript();
+    unsubscribe();
+    if (typeof window !== "undefined") {
+      window.removeEventListener("pagehide", flushScript);
+      window.removeEventListener("beforeunload", flushScript);
+    }
+  };
 }
 
 const KEY_LAST_VERSION = "lastVersion";

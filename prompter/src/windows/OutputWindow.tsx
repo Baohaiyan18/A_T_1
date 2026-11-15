@@ -142,6 +142,16 @@ export function OutputWindow() {
       // Khi lật dọc thì đảo chiều lăn cho khớp chiều nhìn.
       const value = ev.deltaY * (live.current.mirrorV ? -1 : 1);
       runCmd(engine.current, { action: "px", value }, max(), live.current);
+      if (ready.current) {
+        channel.send({
+          type: "pos",
+          pos: engine.current.pos,
+          playing: engine.current.playing,
+          counting: engine.current.counting,
+          w: window.innerWidth,
+          h: window.innerHeight,
+        });
+      }
     };
 
     document.addEventListener("keydown", onKey);
