@@ -1,6 +1,6 @@
 [package]
 name = "prompter"
-version = "0.1.0"
+version = "0.2.0"
 description = "Phần mềm máy nhắc chữ"
 authors = []
 edition = "2024"
@@ -25,6 +25,9 @@ tauri-plugin-store = "2"
 tauri-plugin-dialog = "2"
 tauri-plugin-single-instance = "2"
 tauri-plugin-updater = "2"
+
+[target.'cfg(windows)'.dependencies]
+windows = { version = "0.62", features = ["Win32_Graphics_DirectWrite", "Win32_Foundation"] }
 
 
 # Read the optimization guideline for more details: https://tauri.app/concept/size/#cargo-configuration

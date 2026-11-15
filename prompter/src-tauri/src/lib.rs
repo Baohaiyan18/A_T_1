@@ -1,3 +1,4 @@
+mod fonts;
 mod monitors;
 mod output;
 mod script_io;
@@ -44,6 +45,7 @@ pub fn run() {
         .manage(output::OutputState::default())
         .manage(update::PendingUpdate::default())
         .invoke_handler(tauri::generate_handler![
+            fonts::list_fonts,
             script_io::open_script,
             script_io::save_script,
             monitors::list_monitors,

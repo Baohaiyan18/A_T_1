@@ -1,10 +1,11 @@
-import { memo, useCallback } from "react";
+import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import { IconButton } from "@astryxdesign/core/IconButton";
 import { SegmentedControl, SegmentedControlItem } from "@astryxdesign/core/SegmentedControl";
 import { Selector } from "@astryxdesign/core/Selector";
 import { Slider } from "@astryxdesign/core/Slider";
 import { Switch } from "@astryxdesign/core/Switch";
-import { FONTS, RANGES } from "../settings";
+import { listFonts, mergeFonts } from "../bridge/fonts";
+import { RANGES } from "../settings";
 import type { Settings } from "../settings";
 import { useStore } from "../state/store";
 import { ColorPicker } from "./ColorPicker";
@@ -35,7 +36,6 @@ const CHECKS: { key: CheckKey; label: string }[] = [
   { key: "marker", label: "Hiện vạch đọc" },
 ];
 
-const FONT_OPTIONS = FONTS.map((f) => ({ value: f, label: f }));
 const formatSpeed = (v: number) => v.toFixed(1);
 
 /** Mỗi hàng chỉ theo dõi đúng một trường cài đặt, nên kéo một thanh trượt không làm vẽ lại cả bảng. */
@@ -147,13 +147,35 @@ const TextOptions = memo(function TextOptions() {
   const align = useSetting("align");
   const countdown = useSetting("countdown");
   const set = useStore((s) => s.setSetting);
+  const [systemFonts, setSystemFonts] = useState<string[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    void listFonts()
+      .then((list) => {
+        if (!cancelled) setSystemFonts(list);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const fontOptions = useMemo(
+    () => mergeFonts(systemFonts, font).map((f) => ({ value: f, label: f })),
+    [systemFonts, font],
+  );
+
   return (
     <div className="opts opts-type">
       <Selector
         label="Font chữ"
-        options={FONT_OPTIONS}
+        options={fontOptions}
         value={font}
         width="100%"
+        hasSearch
+        searchPlaceholder="Tìm font..."
+        emptySearchText="Không tìm thấy font"
         onChange={(v: string | null) => v && set("font", v)}
       />
       <div className="opt-field">

@@ -56,11 +56,26 @@ export const RANGES = {
   markerPos: { min: 10, max: 70, step: 1 },
 } satisfies Record<string, Range>;
 
-export const FONTS = ["Roboto"];
+export const FONTS = ["Roboto", "Arial", "Segoe UI", "Tahoma", "Verdana", "Times New Roman"];
 
 const ALIGNS: Align[] = ["left", "center"];
 const COUNTDOWNS: Countdown[] = [0, 3, 5];
 const COLOR = /^#[0-9a-f]{6}$/i;
+const MAX_FONT_NAME_LENGTH = 128;
+
+/** Kiểm tra và chuẩn hóa tên font: bỏ khoảng trắng thừa, chặn ký tự phá vỡ CSS `font-family`. */
+export function sanitizeFont(raw: unknown, fallback = DEFAULT_SETTINGS.font): string {
+  if (typeof raw !== "string") return fallback;
+  const trimmed = raw.trim();
+  if (!trimmed || trimmed.length > MAX_FONT_NAME_LENGTH || /["\\;{}]/.test(trimmed)) {
+    return fallback;
+  }
+  for (let i = 0; i < trimmed.length; i++) {
+    const code = trimmed.charCodeAt(i);
+    if (code < 32 || code === 127) return fallback;
+  }
+  return trimmed;
+}
 
 /**
  * Dựng cài đặt hợp lệ từ dữ liệu đã lưu: trường thiếu, sai kiểu hoặc ngoài khoảng
@@ -87,7 +102,7 @@ export function sanitizeSettings(raw: unknown): Settings {
     markerPos: num("markerPos"),
     speed: num("speed"),
     align: ALIGNS.includes(r.align as Align) ? (r.align as Align) : d.align,
-    font: typeof r.font === "string" && FONTS.includes(r.font) ? r.font : d.font,
+    font: sanitizeFont(r.font, d.font),
     countdown: COUNTDOWNS.includes(r.countdown as Countdown)
       ? (r.countdown as Countdown)
       : d.countdown,

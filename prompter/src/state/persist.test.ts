@@ -29,12 +29,12 @@ describe("sanitizeSettings", () => {
     expect(sanitizeSettings("hỏng")).toEqual(DEFAULT_SETTINGS);
   });
 
-  it("giữ giá trị hợp lệ, bổ sung trường thiếu bằng mặc định", () => {
-    expect(sanitizeSettings({ speed: 22.5, mirrorH: true, font: "Roboto" })).toEqual({
+  it("giữ giá trị hợp lệ kể cả font hệ thống, bổ sung trường thiếu bằng mặc định", () => {
+    expect(sanitizeSettings({ speed: 22.5, mirrorH: true, font: "  Segoe UI  " })).toEqual({
       ...DEFAULT_SETTINGS,
       speed: 22.5,
       mirrorH: true,
-      font: "Roboto",
+      font: "Segoe UI",
     });
   });
 
@@ -47,9 +47,14 @@ describe("sanitizeSettings", () => {
       countdown: 7,
       fg: "red",
       upper: "yes",
-      font: "Comic Sans",
+      font: 'Bad";Font',
     });
     expect(s).toEqual({ ...DEFAULT_SETTINGS, fontSize: 260, markerPos: 10 });
+  });
+
+  it("rơi về font mặc định khi font rỗng hoặc sai kiểu", () => {
+    expect(sanitizeSettings({ font: "   " }).font).toBe(DEFAULT_SETTINGS.font);
+    expect(sanitizeSettings({ font: 123 }).font).toBe(DEFAULT_SETTINGS.font);
   });
 });
 
