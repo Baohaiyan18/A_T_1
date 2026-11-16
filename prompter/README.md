@@ -3,6 +3,27 @@
 Phần mềm máy nhắc chữ: soạn kịch bản, điều khiển tốc độ và chiếu toàn màn hình ra màn hình nhắc chữ.
 Xây bằng Tauri 2 (Rust) và React + TypeScript.
 
+## Sử dụng
+
+**Cú pháp kịch bản** (màu, đậm, nghiêng chỉ có hiệu lực trong một dòng):
+
+| Cú pháp | Hiển thị |
+|---|---|
+| `## Tiêu đề` | Dòng tiêu đề |
+| `[ghi chú]` | Ghi chú dàn dựng (luôn dùng màu ghi chú) |
+| `{1}chữ{/}` … `{5}chữ{/}` | Màu nhấn 1 đỏ · 2 cam · 3 vàng · 4 xanh lá · 5 xanh dương; thiếu `{/}` thì tự đóng cuối dòng |
+| `**chữ**` / `*chữ*` | Đậm / nghiêng |
+
+- **Tab kịch bản:** mỗi tab nhớ vị trí đọc và mốc giờ riêng, tự lưu. Nhấp đúp để đổi tên, "Mở .txt"
+  mở tab mới, đóng tab phải xác nhận. Chuyển tab thì tự dừng chạy; màn chiếu theo tab đang chọn.
+- **Khung soạn thảo:** chế độ MD (gõ) và Preview (bản đọc đã định dạng).
+- **Đồng hồ:** bắt đầu khi chữ thực sự chạy, vẫn chạy khi tạm dừng. Góc trên-phải xem trước và màn chiếu
+  hiện thời gian còn lại (xanh) hoặc quá giờ (đỏ, `+mm:ss`). Bấm vào đồng hồ trên khung xem trước để
+  đặt mốc giờ (`0` = chỉ hiện thời gian đã đọc) hoặc đặt lại. Không lưu khi tắt app; mốc giờ thì có lưu.
+- **Cài đặt:** nút ⚙ cuối thanh tiêu đề khung Xem trước mở ngăn cài đặt hiển thị (có công tắc ẩn đồng hồ
+  trên màn chiếu); tốc độ nằm cạnh nút CHẠY; nút ⚙ trên thanh đầu trang mở cài đặt ứng dụng
+  (Sáng/Tối, đếm ngược, phím tắt, kiểm tra cập nhật).
+
 ## Phát triển
 
 Cần Node.js LTS, Rust stable, Microsoft C++ Build Tools và WebView2 (có sẵn trên Windows 10/11).
@@ -25,8 +46,9 @@ Khi chạy trong trình duyệt, lưu trữ dùng localStorage và màn chiếu 
 - `src/components`, `src/windows` — giao diện; `ControlWindow` là màn điều khiển, `OutputWindow` là màn chiếu.
 - `src/bridge` — lớp nối với Tauri, có nhánh dự phòng cho trình duyệt.
 - `src/state` — store Zustand, lưu trữ, trạng thái cập nhật.
+- `src/lib` — hàm thuần: định dạng, màu, đồng hồ (`timer.ts`).
 - `src-tauri/src` — lệnh Rust: màn hình (`monitors.rs`), cửa sổ chiếu (`output.rs`),
-  file kịch bản (`script_io.rs`), cập nhật (`update.rs`).
+  file kịch bản (`script_io.rs`), cập nhật (`update.rs`), font hệ thống (`fonts.rs`).
 
 ## Đóng gói
 
