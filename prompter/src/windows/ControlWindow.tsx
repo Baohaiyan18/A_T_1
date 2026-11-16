@@ -26,7 +26,7 @@ import { usePrompter } from "../hooks/usePrompter";
 import type { Prompter } from "../hooks/usePrompter";
 import { clamp } from "../lib/clamp";
 import { parseScript } from "../script/parse";
-import { useStore } from "../state/store";
+import { useActiveText } from "../state/store";
 import { useThemeMode } from "../state/themeMode";
 import { prompterTheme } from "../theme";
 import "./ControlWindow.css";
@@ -39,9 +39,11 @@ const LivePreview = memo(function LivePreview({
   stageRef: RefObject<StageHandle | null>;
   prompter: Prompter;
 }) {
-  const text = useStore((s) => s.text);
+  const text = useActiveText();
   const deferredText = useDeferredValue(text);
   const lines = useMemo(() => parseScript(deferredText), [deferredText]);
+  // Sau khi chữ đã dựng mới đặt vị trí của tab vừa chuyển sang.
+  useLayoutEffect(() => prompter.linesRendered(deferredText), [prompter, deferredText]);
   return <Preview stageRef={stageRef} lines={lines} prompter={prompter} />;
 });
 
