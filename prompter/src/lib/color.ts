@@ -54,8 +54,7 @@ export function normalizeHex(input: string): string | null {
   return null;
 }
 
-const toHexByte = (n: number): string =>
-  clamp(Math.round(n), 0, 255).toString(16).padStart(2, "0");
+const toHexByte = (n: number): string => clamp(Math.round(n), 0, 255).toString(16).padStart(2, "0");
 
 export function rgbToHex(r: number, g: number, b: number): string {
   return `#${toHexByte(r)}${toHexByte(g)}${toHexByte(b)}`;
