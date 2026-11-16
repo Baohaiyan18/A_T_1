@@ -163,3 +163,44 @@
 .stage .count.show {
   display: flex;
 }
+
+/* Đồng hồ góc trên-phải; nằm trong `.flip` nên lật theo gương cùng chữ. */
+.stage .timer {
+  position: absolute;
+  top: 0.4em;
+  right: 0.5em;
+  display: none;
+  padding: 0.1em 0.45em;
+  border: 0;
+  border-radius: 0.3em;
+  /* Đủ đậm để số vẫn rõ khi màu nền màn chiếu sáng. */
+  background: rgba(0, 0, 0, 0.78);
+  color: #3ddc84;
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+  pointer-events: none;
+}
+
+.stage .timer.show {
+  display: block;
+}
+
+.stage .timer.over {
+  color: #ff4d4f;
+}
+
+.stage button.timer {
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.stage button.timer:hover {
+  background: rgba(0, 0, 0, 0.9);
+}
+
+.stage button.timer:focus-visible {
+  outline: 2px solid var(--focus-ring, #ffffff);
+  outline-offset: 2px;
+}

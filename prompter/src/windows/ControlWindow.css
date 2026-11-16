@@ -809,3 +809,16 @@ body.is-resizing-col * {
 .vbox.new b {
   color: var(--accent);
 }
+
+/* Popover đồng hồ trên khung xem trước */
+.timer-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.timer-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--sp-2);
+}

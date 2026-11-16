@@ -11,7 +11,7 @@ import { ColorPicker } from "./ColorPicker";
 
 type RangeKey = Exclude<keyof typeof RANGES, "speed">;
 type ColorKey = "fg" | "bg" | "cue" | "head" | "c1" | "c2" | "c3" | "c4" | "c5";
-type CheckKey = "mirrorH" | "mirrorV" | "upper" | "marker";
+type CheckKey = "mirrorH" | "mirrorV" | "upper" | "marker" | "showTimer";
 
 const RANGE_ROWS: { key: RangeKey; label: string; format: (v: number) => string }[] = [
   { key: "fontSize", label: "Cỡ chữ", format: (v) => `${v}px` },
@@ -37,6 +37,7 @@ const CHECKS: { key: CheckKey; label: string }[] = [
   { key: "mirrorV", label: "Lật dọc" },
   { key: "upper", label: "CHỮ IN HOA" },
   { key: "marker", label: "Hiện vạch đọc" },
+  { key: "showTimer", label: "Hiện đồng hồ trên màn chiếu" },
 ];
 
 /** Mỗi hàng chỉ theo dõi đúng một trường cài đặt, nên kéo một thanh trượt không làm vẽ lại cả bảng. */
