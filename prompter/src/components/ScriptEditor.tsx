@@ -1,16 +1,29 @@
-import { memo, useRef, useState } from "react";
+import { memo, useEffect, useRef, useState } from "react";
 import { Banner } from "@astryxdesign/core/Banner";
 import { Button } from "@astryxdesign/core/Button";
+import { SegmentedControl, SegmentedControlItem } from "@astryxdesign/core/SegmentedControl";
 import { openScriptFile, saveScriptFile } from "../bridge/files";
 import type { Prompter } from "../hooks/usePrompter";
 import { useStore } from "../state/store";
 import { Icon } from "./Icon";
+import { ScriptReader } from "./ScriptReader";
 
 export const ScriptEditor = memo(function ScriptEditor({ prompter }: { prompter: Prompter }) {
   const text = useStore((s) => s.text);
   const setText = useStore((s) => s.setText);
   const area = useRef<HTMLTextAreaElement>(null);
   const [error, setError] = useState("");
+  const [mode, setMode] = useState<"md" | "preview">("md");
+  const preview = mode === "preview";
+  const backToMd = useRef(false);
+
+  // Về MD thì trả focus cho ô gõ để gõ tiếp / Ctrl+Enter ngay (vị trí con trỏ vẫn giữ).
+  // Làm sau khi render vì lúc đổi chế độ ô gõ còn đang ẩn.
+  useEffect(() => {
+    if (mode !== "md" || !backToMd.current) return;
+    backToMd.current = false;
+    area.current?.focus({ preventScroll: true });
+  }, [mode]);
 
   const fromCursor = () => {
     const ta = area.current;
@@ -44,6 +57,18 @@ export const ScriptEditor = memo(function ScriptEditor({ prompter }: { prompter:
     <section className="card editor" aria-labelledby="script-heading">
       <div className="bar">
         <h3 id="script-heading">Kịch bản</h3>
+        <SegmentedControl
+          label="Chế độ khung kịch bản"
+          size="sm"
+          value={mode}
+          onChange={(v) => {
+            backToMd.current = v === "md";
+            setMode(v as "md" | "preview");
+          }}
+        >
+          <SegmentedControlItem value="md" label="MD" />
+          <SegmentedControlItem value="preview" label="Preview" />
+        </SegmentedControl>
         <Button
           size="sm"
           label="Mở .txt"
@@ -63,6 +88,7 @@ export const ScriptEditor = memo(function ScriptEditor({ prompter }: { prompter:
           label="Chạy từ con trỏ"
           tooltip="Đưa dòng đang đặt con trỏ lên vạch đọc (Ctrl+Enter)"
           icon={<Icon name="corner-right-up" size={14} />}
+          isDisabled={preview}
           onClick={fromCursor}
         />
       </div>
@@ -78,8 +104,10 @@ export const ScriptEditor = memo(function ScriptEditor({ prompter }: { prompter:
           />
         </div>
       )}
+      {/* Ẩn chứ không bỏ textarea để giữ nguyên vị trí con trỏ khi quay lại MD. */}
       <textarea
         ref={area}
+        hidden={preview}
         aria-labelledby="script-heading"
         spellCheck={false}
         placeholder="Dán kịch bản vào đây..."
@@ -92,6 +120,7 @@ export const ScriptEditor = memo(function ScriptEditor({ prompter }: { prompter:
           }
         }}
       />
+      {preview && <ScriptReader />}
       <div className="tip">
         Dòng bắt đầu bằng <code>##</code> → tiêu đề màu xanh · Chữ trong <code>[ngoặc vuông]</code>{" "}
         → ghi chú dàn dựng màu vàng (MC không đọc) · <code>{"{1}chữ{/}"}</code>…
