@@ -46,15 +46,21 @@ const Lines = memo(function Lines({ lines }: { lines: Line[] }) {
           );
         return (
           <div key={i} className="ln">
-            {line.segments.map((seg, j) =>
-              seg.kind === "cue" ? (
-                <span key={j} className="cue">
+            {line.segments.map((seg, j) => {
+              const cls =
+                seg.kind === "cue"
+                  ? "cue"
+                  : [seg.color && `c${seg.color}`, seg.bold && "b", seg.italic && "i"]
+                      .filter(Boolean)
+                      .join(" ");
+              return cls ? (
+                <span key={j} className={cls}>
                   {seg.text}
                 </span>
               ) : (
                 seg.text
-              ),
-            )}
+              );
+            })}
           </div>
         );
       })}
@@ -163,7 +169,10 @@ export function Stage({ lines, settings: s, scale, mirror = true, className, ref
   // Cài đặt đổi thì cập nhật quy tắc CSS theo class và vẽ lại ngay, không chờ khung hình kế tiếp.
   useLayoutEffect(() => {
     geo.current = { lineH, scale, markerPos: s.markerPos, scope };
-    setClassRule(scope, `background: ${s.bg}; --cue: ${s.cue}; --head: ${s.head};`);
+    setClassRule(
+      scope,
+      `background: ${s.bg}; --cue: ${s.cue}; --head: ${s.head}; --c1: ${s.c1}; --c2: ${s.c2}; --c3: ${s.c3}; --c4: ${s.c4}; --c5: ${s.c5};`,
+    );
     setClassRule(
       `${scope} .txt`,
       `font-size: ${(s.fontSize * scale).toFixed(2)}px; line-height: ${s.lineHeight}; padding: 0 ${s.margin}%; color: ${s.fg}; font-family: "${s.font}", var(--font-sans);`,
@@ -185,6 +194,11 @@ export function Stage({ lines, settings: s, scale, mirror = true, className, ref
     s.bg,
     s.cue,
     s.head,
+    s.c1,
+    s.c2,
+    s.c3,
+    s.c4,
+    s.c5,
     s.font,
     s.fontSize,
     s.lineHeight,

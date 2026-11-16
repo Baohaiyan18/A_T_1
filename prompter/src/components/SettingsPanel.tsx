@@ -12,7 +12,7 @@ import { ColorPicker } from "./ColorPicker";
 import { Icon } from "./Icon";
 
 type RangeKey = Exclude<keyof typeof RANGES, "speed">;
-type ColorKey = "fg" | "bg" | "cue" | "head";
+type ColorKey = "fg" | "bg" | "cue" | "head" | "c1" | "c2" | "c3" | "c4" | "c5";
 type CheckKey = "mirrorH" | "mirrorV" | "upper" | "marker";
 
 const RANGE_ROWS: { key: RangeKey; label: string; format: (v: number) => string }[] = [
@@ -27,6 +27,11 @@ const COLORS: { key: ColorKey; label: string }[] = [
   { key: "bg", label: "Màu nền" },
   { key: "cue", label: "Màu ghi chú [ ]" },
   { key: "head", label: "Màu tiêu đề ##" },
+  { key: "c1", label: "Màu 1 {1} (đỏ)" },
+  { key: "c2", label: "Màu 2 {2} (cam)" },
+  { key: "c3", label: "Màu 3 {3} (vàng)" },
+  { key: "c4", label: "Màu 4 {4} (xanh lá)" },
+  { key: "c5", label: "Màu 5 {5} (xanh dương)" },
 ];
 
 const CHECKS: { key: CheckKey; label: string }[] = [

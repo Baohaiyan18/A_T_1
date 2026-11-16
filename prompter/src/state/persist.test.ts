@@ -52,6 +52,23 @@ describe("sanitizeSettings", () => {
     expect(s).toEqual({ ...DEFAULT_SETTINGS, fontSize: 260, markerPos: 10 });
   });
 
+  it("giữ màu nhấn c1..c5 hợp lệ, màu sai định dạng về mặc định", () => {
+    const s = sanitizeSettings({ c1: "#123abc", c2: "red", c3: "#fff", c4: 5, c5: "#ABCDEF" });
+    expect([s.c1, s.c2, s.c3, s.c4, s.c5]).toEqual([
+      "#123abc",
+      DEFAULT_SETTINGS.c2,
+      DEFAULT_SETTINGS.c3,
+      DEFAULT_SETTINGS.c4,
+      "#ABCDEF",
+    ]);
+  });
+
+  it("nạp được cài đặt cũ (v0.2.0) chưa có c1..c5", () => {
+    const old = { ...DEFAULT_SETTINGS } as Record<string, unknown>;
+    for (const k of ["c1", "c2", "c3", "c4", "c5"]) delete old[k];
+    expect(sanitizeSettings({ ...old, speed: 12 })).toEqual({ ...DEFAULT_SETTINGS, speed: 12 });
+  });
+
   it("rơi về font mặc định khi font rỗng hoặc sai kiểu", () => {
     expect(sanitizeSettings({ font: "   " }).font).toBe(DEFAULT_SETTINGS.font);
     expect(sanitizeSettings({ font: 123 }).font).toBe(DEFAULT_SETTINGS.font);

@@ -94,7 +94,9 @@ export const ScriptEditor = memo(function ScriptEditor({ prompter }: { prompter:
       />
       <div className="tip">
         Dòng bắt đầu bằng <code>##</code> → tiêu đề màu xanh · Chữ trong <code>[ngoặc vuông]</code>{" "}
-        → ghi chú dàn dựng màu vàng (MC không đọc). Kịch bản tự lưu trên máy.
+        → ghi chú dàn dựng màu vàng (MC không đọc) · <code>{"{1}chữ{/}"}</code>…
+        <code>{"{5}chữ{/}"}</code> → tô màu · <code>**đậm**</code> · <code>*nghiêng*</code>. Kịch
+        bản tự lưu trên máy.
       </div>
     </section>
   );
