@@ -200,6 +200,25 @@ body.is-resizing-row * {
   color: var(--muted);
 }
 
+.editor .reader {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--sp-4);
+  font-size: 15px;
+  line-height: 1.6;
+  font-weight: 600;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  outline: 0;
+  /* Nền bản đọc tối (theo màn chiếu) nên thanh cuộn cũng dùng kiểu tối, kể cả khi app ở giao diện sáng. */
+  color-scheme: dark;
+}
+
+.editor .reader:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: -2px;
+}
+
 .tip {
   font-size: 12px;
   color: var(--muted);

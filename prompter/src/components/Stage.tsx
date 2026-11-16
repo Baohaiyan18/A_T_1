@@ -28,7 +28,8 @@ interface Props {
   ref?: Ref<StageHandle>;
 }
 
-const Lines = memo(function Lines({ lines }: { lines: Line[] }) {
+/** Dựng các dòng kịch bản; dùng chung cho vùng chạy chữ và bản đọc `ScriptReader`. */
+export const Lines = memo(function Lines({ lines }: { lines: Line[] }) {
   return (
     <>
       {lines.map((line, i) => {
