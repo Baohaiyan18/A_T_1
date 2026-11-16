@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { clamp } from "../lib/clamp";
 import { SAMPLE_SCRIPT } from "../script/parse";
 import { DEFAULT_SETTINGS, RANGES } from "../settings";
+import type { TimerSync } from "../bridge/bus";
 import type { Settings } from "../settings";
 
 /** Thông tin chạy chữ hiển thị trên giao diện, cập nhật vài lần mỗi giây. */
@@ -53,6 +54,8 @@ interface State {
   /** Luôn có ít nhất một tab. */
   tabs: ScriptTab[];
   activeId: string;
+  /** Lúc đồng hồ của từng tab bắt đầu (`Date.now()`); chưa có = chưa chạy. Không lưu khi tắt app. */
+  timers: Record<string, number>;
   /** Kích thước màn chiếu (px), dùng để giữ đúng tỉ lệ cho khung xem trước. */
   outSize: { w: number; h: number };
   playback: Playback;
@@ -74,6 +77,10 @@ interface State {
   renameTab: (id: string, name: string) => void;
   selectTab: (id: string) => void;
   setTabPos: (id: string, pos: number) => void;
+  /** Đặt mốc giờ (giây) cho tab; 0 = tắt đếm ngược. */
+  setTabTarget: (id: string, targetSec: number) => void;
+  startTimer: (id: string, at: number) => void;
+  resetTimer: (id: string) => void;
   setPlayback: (playback: Playback) => void;
   setOutSize: (w: number, h: number) => void;
   setDisplayKey: (key: string | null) => void;
@@ -86,10 +93,17 @@ const firstTab = newTab(NAME_PREFIX + 1, SAMPLE_SCRIPT);
 const patchTab = (tabs: ScriptTab[], id: string, patch: Partial<ScriptTab>) =>
   tabs.map((t) => (t.id === id ? { ...t, ...patch } : t));
 
+function without(timers: Record<string, number>, id: string): Record<string, number> {
+  const next = { ...timers };
+  delete next[id];
+  return next;
+}
+
 export const useStore = create<State>()((set, get) => ({
   settings: DEFAULT_SETTINGS,
   tabs: [firstTab],
   activeId: firstTab.id,
+  timers: {},
   outSize: { w: 1920, h: 1080 },
   playback: { running: false, progress: 0, secondsLeft: null },
   displayKey: null,
@@ -120,7 +134,7 @@ export const useStore = create<State>()((set, get) => ({
     set((s) => {
       if (s.tabs.length <= 1 || !s.tabs.some((t) => t.id === id)) return {};
       const activeId = id === s.activeId ? neighborId(s.tabs, id) : s.activeId;
-      return { tabs: s.tabs.filter((t) => t.id !== id), activeId };
+      return { tabs: s.tabs.filter((t) => t.id !== id), activeId, timers: without(s.timers, id) };
     }),
   renameTab: (id, name) => {
     const trimmed = name.trim();
@@ -130,12 +144,21 @@ export const useStore = create<State>()((set, get) => ({
     if (get().tabs.some((t) => t.id === id)) set({ activeId: id });
   },
   setTabPos: (id, pos) => set((s) => ({ tabs: patchTab(s.tabs, id, { pos }) })),
+  setTabTarget: (id, targetSec) =>
+    set((s) => ({ tabs: patchTab(s.tabs, id, { targetSec: Math.max(0, Math.floor(targetSec)) }) })),
+  startTimer: (id, at) => set((s) => ({ timers: { ...s.timers, [id]: at } })),
+  resetTimer: (id) => set((s) => (id in s.timers ? { timers: without(s.timers, id) } : {})),
   setPlayback: (playback) => set({ playback }),
   setOutSize: (w, h) => set({ outSize: { w, h } }),
   setDisplayKey: (displayKey) => set({ displayKey }),
   setOutputOpen: (outputOpen) => set({ outputOpen }),
   setOutputConnected: (outputConnected) => set({ outputConnected }),
 }));
+
+/** Đồng hồ của tab đang chọn, gửi sang màn chiếu để tự tính. */
+export function activeTimer(s: State): TimerSync {
+  return { startedAt: s.timers[s.activeId] ?? null, targetSec: activeTab(s).targetSec };
+}
 
 /** Nội dung tab đang chọn. */
 export const useActiveText = () => useStore((s) => activeTab(s).text);

@@ -25,6 +25,8 @@ export interface Settings {
   /** Vị trí vạch đọc, tính theo % chiều cao. */
   markerPos: number;
   upper: boolean;
+  /** Hiện đồng hồ trên màn chiếu (khung xem trước luôn hiện). */
+  showTimer: boolean;
   countdown: Countdown;
   speed: number;
 }
@@ -49,6 +51,7 @@ export const DEFAULT_SETTINGS: Settings = {
   marker: true,
   markerPos: 30,
   upper: false,
+  showTimer: true,
   countdown: 3,
   speed: 10,
 };
@@ -100,7 +103,7 @@ export function sanitizeSettings(raw: unknown): Settings {
     const { min, max } = RANGES[key];
     return typeof v === "number" && Number.isFinite(v) ? Math.max(min, Math.min(max, v)) : d[key];
   };
-  const bool = (key: "mirrorH" | "mirrorV" | "marker" | "upper"): boolean =>
+  const bool = (key: "mirrorH" | "mirrorV" | "marker" | "upper" | "showTimer"): boolean =>
     typeof r[key] === "boolean" ? r[key] : d[key];
   const color = (key: "fg" | "bg" | "cue" | "head" | "c1" | "c2" | "c3" | "c4" | "c5"): string => {
     const v = r[key];
@@ -121,6 +124,7 @@ export function sanitizeSettings(raw: unknown): Settings {
     mirrorV: bool("mirrorV"),
     marker: bool("marker"),
     upper: bool("upper"),
+    showTimer: bool("showTimer"),
     fg: color("fg"),
     bg: color("bg"),
     cue: color("cue"),

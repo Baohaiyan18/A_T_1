@@ -6,6 +6,7 @@ import type { Line } from "../script/parse";
 import { useStore } from "../state/store";
 import { Stage } from "./Stage";
 import type { StageHandle } from "./Stage";
+import { TimerPopover } from "./TimerPopover";
 
 interface Props {
   stageRef: Ref<StageHandle>;
@@ -19,6 +20,7 @@ export const Preview = memo(function Preview({ stageRef, lines, prompter }: Prop
   const outSize = useStore((s) => s.outSize);
   const wrap = useRef<HTMLDivElement>(null);
   const box = useRef<HTMLDivElement>(null);
+  const timerBtn = useRef<HTMLButtonElement>(null);
   const [width, setWidth] = useState(480);
 
   const scale = width / outSize.w;
@@ -73,6 +75,8 @@ export const Preview = memo(function Preview({ stageRef, lines, prompter }: Prop
 
   // Nhấp vào một điểm → đưa điểm đó lên vạch đọc.
   const onClick = (e: MouseEvent<HTMLDivElement>) => {
+    // Bấm vào đồng hồ thì mở popover đồng hồ, không nhảy dòng.
+    if (e.target instanceof Element && e.target.closest(".timer")) return;
     const r = e.currentTarget.getBoundingClientRect();
     const markerY = (r.height * settings.markerPos) / 100;
     prompter.cmd({
@@ -111,8 +115,10 @@ export const Preview = memo(function Preview({ stageRef, lines, prompter }: Prop
           scale={scale}
           mirror={false}
           className="pvstage"
+          timerButtonRef={timerBtn}
         />
       </div>
+      <TimerPopover anchorRef={timerBtn} />
     </div>
   );
 });
