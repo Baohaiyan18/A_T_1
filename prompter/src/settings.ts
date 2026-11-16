@@ -15,6 +15,12 @@ export interface Settings {
   bg: string;
   cue: string;
   head: string;
+  /** Màu nhấn `{1}`…`{5}`. */
+  c1: string;
+  c2: string;
+  c3: string;
+  c4: string;
+  c5: string;
   marker: boolean;
   /** Vị trí vạch đọc, tính theo % chiều cao. */
   markerPos: number;
@@ -35,6 +41,11 @@ export const DEFAULT_SETTINGS: Settings = {
   bg: "#000000",
   cue: "#ffc337",
   head: "#00b3e4",
+  c1: "#ff4d4f",
+  c2: "#ff8c1a",
+  c3: "#ffe14d",
+  c4: "#3ddc84",
+  c5: "#3b82f6",
   marker: true,
   markerPos: 30,
   upper: false,
@@ -91,7 +102,7 @@ export function sanitizeSettings(raw: unknown): Settings {
   };
   const bool = (key: "mirrorH" | "mirrorV" | "marker" | "upper"): boolean =>
     typeof r[key] === "boolean" ? r[key] : d[key];
-  const color = (key: "fg" | "bg" | "cue" | "head"): string => {
+  const color = (key: "fg" | "bg" | "cue" | "head" | "c1" | "c2" | "c3" | "c4" | "c5"): string => {
     const v = r[key];
     return typeof v === "string" && COLOR.test(v) ? v : d[key];
   };
@@ -114,5 +125,10 @@ export function sanitizeSettings(raw: unknown): Settings {
     bg: color("bg"),
     cue: color("cue"),
     head: color("head"),
+    c1: color("c1"),
+    c2: color("c2"),
+    c3: color("c3"),
+    c4: color("c4"),
+    c5: color("c5"),
   };
 }

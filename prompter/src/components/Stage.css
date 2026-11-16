@@ -66,6 +66,35 @@
   font-weight: 500;
 }
 
+.stage .c1 {
+  color: var(--c1, #ff4d4f);
+}
+
+.stage .c2 {
+  color: var(--c2, #ff8c1a);
+}
+
+.stage .c3 {
+  color: var(--c3, #ffe14d);
+}
+
+.stage .c4 {
+  color: var(--c4, #3ddc84);
+}
+
+.stage .c5 {
+  color: var(--c5, #3b82f6);
+}
+
+/* Chữ thường đã đậm 600 nên chữ đậm dùng 800 để còn phân biệt được. */
+.stage .b {
+  font-weight: 800;
+}
+
+.stage .i {
+  font-style: italic;
+}
+
 .stage .ln.end {
   color: #94a3b8;
   text-align: center;
