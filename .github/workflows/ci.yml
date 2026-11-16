@@ -8,26 +8,31 @@ on:
 jobs:
   check:
     runs-on: windows-latest
+    # Ứng dụng nằm trong thư mục prompter/ của kho.
+    defaults:
+      run:
+        working-directory: prompter
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: lts/*
           cache: npm
+          cache-dependency-path: prompter/package-lock.json
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt, clippy
       - uses: Swatinem/rust-cache@v2
         with:
-          workspaces: src-tauri
+          workspaces: prompter/src-tauri
       - run: npm ci
       - run: npx prettier --check src
       - run: npm run lint
       - run: npm test
       - run: npm run build
       - run: cargo fmt --check
-        working-directory: src-tauri
+        working-directory: prompter/src-tauri
       - run: cargo clippy --all-targets -- -D warnings
-        working-directory: src-tauri
+        working-directory: prompter/src-tauri
       - run: cargo test
-        working-directory: src-tauri
+        working-directory: prompter/src-tauri

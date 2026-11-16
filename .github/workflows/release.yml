@@ -8,6 +8,10 @@ on:
 jobs:
   release:
     runs-on: windows-latest
+    # Ứng dụng nằm trong thư mục prompter/ của kho.
+    defaults:
+      run:
+        working-directory: prompter
     permissions:
       contents: write
     steps:
@@ -16,10 +20,11 @@ jobs:
         with:
           node-version: lts/*
           cache: npm
+          cache-dependency-path: prompter/package-lock.json
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
         with:
-          workspaces: src-tauri
+          workspaces: prompter/src-tauri
       - run: npm ci
       - run: npm test
       - uses: tauri-apps/tauri-action@v0
@@ -29,6 +34,7 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
+          projectPath: prompter
           tagName: ${{ github.ref_name }}
           releaseName: Prompter ${{ github.ref_name }}
           releaseDraft: true
