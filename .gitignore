@@ -15,6 +15,7 @@ target/
 # Local / secrets
 .env
 .env.*
+*.key
 *.local
 .claude/settings.local.json
 .mcp.json
