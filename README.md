@@ -17,18 +17,34 @@
 
 - **Hai cửa sổ độc lập (Điều khiển & Màn chiếu):** Soạn thảo, xem trước và tinh chỉnh thông số ở màn điều khiển trong khi xuất toàn màn hình mượt mà ra màn hình nhắc chữ ngoài (hoặc cửa sổ riêng).
 - **Trình soạn thảo kịch bản trực quan:**
+  - **Nhiều tab kịch bản:** mỗi tab nhớ vị trí đọc và mốc giờ riêng, tự lưu và mở lại đủ tab. Nhấp đúp để đổi tên; "Mở .txt" mở tab mới mang tên file; đóng tab phải xác nhận. Màn chiếu luôn theo tab đang chọn, chuyển tab thì tự dừng chạy.
   - Hỗ trợ mở / lưu tệp `.txt` (hỗ trợ tiếng Việt UTF-8, tự xử lý BOM) và tự động lưu trên máy.
-  - Đánh dấu cú pháp trực tiếp trên màn chiếu: dòng bắt đầu bằng `##` làm **tiêu đề** (màu xanh Cyan), nội dung trong `[ngoặc vuông]` làm **ghi chú dàn dựng** (màu vàng Amber).
-  - Nhấn `Ctrl + Enter` để nhảy và chạy ngay từ dòng đang đặt con trỏ.
+  - Hai chế độ **MD** (gõ kịch bản) và **Preview** (bản đọc đã định dạng, chỉ đọc).
+  - Nhấn `Ctrl + Enter` để đưa ngay dòng đang đặt con trỏ lên vạch đọc.
+- **Cú pháp kịch bản** (hiện trên xem trước và màn chiếu; màu, đậm, nghiêng chỉ có hiệu lực trong một dòng):
+
+  | Cú pháp | Hiển thị |
+  |---|---|
+  | `## Tiêu đề` | Dòng **tiêu đề** (mặc định xanh Cyan) |
+  | `[ghi chú]` | **Ghi chú dàn dựng** (mặc định vàng Amber) |
+  | `{1}chữ{/}` … `{5}chữ{/}` | 5 màu nhấn: 1 đỏ · 2 cam · 3 vàng · 4 xanh lá · 5 xanh dương (thiếu `{/}` thì tự đóng cuối dòng) |
+  | `**chữ**` / `*chữ*` | Chữ **đậm** / *nghiêng* |
+
 - **Xem trước & điều khiển chính xác:**
   - Khung **Xem trước** đồng bộ đúng tỉ lệ màn chiếu thật (không lật gương), nhấp vào dòng bất kỳ để đưa lên vạch đọc hoặc lăn chuột để cuộn tay.
   - Thanh tua theo phần trăm kèm thời gian còn lại ước tính (`MM:SS`) và đếm ngược trước khi chạy (`Tắt`, `3 giây`, `5 giây`).
-- **Tùy biến hiển thị toàn diện:**
-  - Chỉnh tốc độ chạy chữ (`0 – 60`), cỡ chữ (`24 – 260px`), giãn dòng (`1.0 – 2.2`), lề hai bên (`0 – 35%`), vị trí vạch đọc (`10 – 70%`), căn trái/giữa, chữ in hoa, lật gương ngang/dọc cho máy nhắc chữ có kính phản chiếu.
-  - Bộ chọn màu HSV + lưới lục giác tổ ong (`ColorPicker`) kèm danh sách màu đã lưu cho màu chữ, màu nền, ghi chú và tiêu đề.
+  - Thanh tốc độ nằm ngay cạnh nút **CHẠY**.
+- **Đồng hồ thời gian đọc theo tab:**
+  - Bắt đầu khi chữ thực sự chạy lần đầu (sau đếm ngược), vẫn chạy khi tạm dừng chữ.
+  - Góc trên-phải xem trước và màn chiếu (lật theo gương) hiện thời gian **còn lại** so với mốc: còn giờ màu xanh, quá giờ màu đỏ và đếm vượt `+00:35`. Mốc `0` thì hiện thời gian đã đọc.
+  - Bấm vào đồng hồ trên khung xem trước để đặt mốc giờ (`5`, `5:30`, `1:05:00`) hoặc đặt lại đồng hồ; rê chuột để xem thời gian đã đọc. Có công tắc ẩn đồng hồ trên màn chiếu.
+- **Tùy biến hiển thị toàn diện** (nút ⚙ cuối thanh tiêu đề khung Xem trước mở ngăn **Cài đặt hiển thị** đè lên khung xem trước, vẫn thấy thay đổi ngay phía sau):
+  - Chỉnh tốc độ chạy chữ (`0 – 60`), cỡ chữ (`24 – 260px`), giãn dòng (`1.0 – 2.2`), lề hai bên (`0 – 35%`), vị trí vạch đọc (`10 – 70%`), font chữ (gồm font cài trên máy), căn trái/giữa, chữ in hoa, lật gương ngang/dọc cho máy nhắc chữ có kính phản chiếu.
+  - Bộ chọn màu HSV + lưới lục giác tổ ong (`ColorPicker`) kèm danh sách màu đã lưu cho màu chữ, màu nền, ghi chú, tiêu đề và 5 màu nhấn.
+- **Cài đặt ứng dụng** (nút ⚙ trên thanh đầu trang): giao diện Sáng / Tối, đếm ngược khi bắt đầu, danh sách phím tắt và kiểm tra cập nhật.
 - **Giao diện Sáng / Tối đồng bộ thương hiệu:**
   - Thiết kế trên **Meta Astryx UI** với bảng màu trích xuất từ logo 6 cánh (**Indigo** `#5664ae` cho chế độ Sáng, **Cyan** `#00b3e4` cho chế độ Tối, kết hợp **Coral / Green / Amber** đạt chuẩn tương phản WCAG AA).
-  - Kéo thả linh hoạt tỷ lệ 3 vùng làm việc (kịch bản, xem trước, cài đặt).
+  - Kéo thả linh hoạt tỷ lệ 2 vùng làm việc (kịch bản và xem trước).
 
 ---
 
@@ -63,14 +79,15 @@ prompter/
 ├── public/                 # Logo thương hiệu (logo.png)
 ├── src/
 │   ├── engine/             # Lõi tính toán cuộn chữ & tốc độ (thuần TS, độc lập React)
-│   ├── script/             # Bộ phân tích cú pháp kịch bản (## tiêu đề, [ghi chú])
+│   ├── script/             # Bộ phân tích cú pháp kịch bản (## tiêu đề, [ghi chú], màu, đậm, nghiêng)
 │   ├── windows/            # ControlWindow (điều khiển) & OutputWindow (màn chiếu)
-│   ├── components/         # ScriptEditor, Preview, Stage, Transport, SettingsPanel, ColorPicker...
+│   ├── components/         # ScriptEditor, ScriptTabs, Preview, Stage, Transport, SettingsPanel, TimerPopover...
 │   ├── bridge/             # Lớp giao tiếp Tauri IPC & fallback trình duyệt
-│   ├── state/              # Zustand store, lưu trữ cài đặt, themeMode & updater
+│   ├── lib/                # Hàm thuần: định dạng, màu, đồng hồ (timer.ts)
+│   ├── state/              # Zustand store, lưu trữ cài đặt và tab, themeMode & updater
 │   └── theme.ts            # Định nghĩa prompterTheme đồng bộ màu logo
 └── src-tauri/
-    └── src/                # Backend Rust: monitors.rs, output.rs, script_io.rs, update.rs
+    └── src/                # Backend Rust: monitors.rs, output.rs, script_io.rs, update.rs, fonts.rs
 ```
 
 ---
@@ -108,7 +125,7 @@ npm run tauri build
 
 Sau khi chạy `npm run tauri build`, sản phẩm biên dịch nằm tại:
 - `prompter/src-tauri/target/release/prompter.exe`
-- `prompter/src-tauri/target/release/bundle/nsis/Prompter_0.1.0_x64-setup.exe`
+- `prompter/src-tauri/target/release/bundle/nsis/Prompter_0.3.0_x64-setup.exe`
 
 ---
 
