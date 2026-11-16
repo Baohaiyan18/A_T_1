@@ -10,16 +10,15 @@ import {
   useState,
 } from "react";
 import type { KeyboardEvent, PointerEvent, RefObject } from "react";
-import { Collapsible } from "@astryxdesign/core/Collapsible";
 import { IconButton } from "@astryxdesign/core/IconButton";
-import { Kbd } from "@astryxdesign/core/Kbd";
 import { Theme } from "@astryxdesign/core/theme";
+import { AppSettingsDialog } from "../components/AppSettingsDialog";
+import { DISPLAY_SETTINGS_ID, DisplaySettingsDrawer } from "../components/DisplaySettingsDrawer";
 import { Footer } from "../components/Footer";
 import { Icon } from "../components/Icon";
 import { Preview } from "../components/Preview";
 import { ProjectionBar } from "../components/ProjectionBar";
 import { ScriptEditor } from "../components/ScriptEditor";
-import { SettingsPanel } from "../components/SettingsPanel";
 import type { StageHandle } from "../components/Stage";
 import { Progress, Transport } from "../components/Transport";
 import { usePrompter } from "../hooks/usePrompter";
@@ -62,70 +61,27 @@ const ThemeToggle = memo(function ThemeToggle() {
   );
 });
 
-const SHORTCUTS: { keys: string[]; label: string }[] = [
-  { keys: ["space"], label: "Chạy / dừng" },
-  { keys: ["up", "down"], label: "Tăng / giảm tốc độ (giữ Shift ×5)" },
-  { keys: ["left", "right"], label: "Lùi / tới 1 dòng" },
-  { keys: ["PgUp", "PgDn"], label: "Lùi / tới 3 dòng" },
-  { keys: ["Home"], label: "Về đầu" },
-  { keys: ["plus", "-"], label: "Cỡ chữ" },
-  { keys: ["mod+enter"], label: "Chạy từ con trỏ (trong ô kịch bản)" },
-  { keys: ["escape"], label: "Tắt chiếu (trên màn chiếu)" },
-];
-
-const ShortcutHelp = memo(function ShortcutHelp() {
-  return (
-    <Collapsible
-      defaultIsOpen={false}
-      trigger={
-        <span className="section-title">
-          <Icon name="keyboard" /> Phím tắt
-        </span>
-      }
-    >
-      <ul className="keys">
-        {SHORTCUTS.map(({ keys, label }) => (
-          <li key={label}>
-            <span className="keys-combo">
-              {keys.map((k) => (
-                <Kbd key={k} keys={k} />
-              ))}
-            </span>
-            <span>{label}</span>
-          </li>
-        ))}
-      </ul>
-      <p className="keys-note">Trên màn chiếu: các phím trên dùng được luôn (trừ cỡ chữ).</p>
-    </Collapsible>
-  );
-});
-
 const LAYOUT_KEY = "prompter.layout";
-const DEFAULT_SPLIT = { x: 44, y: 52 };
+const DEFAULT_SPLIT = { x: 44 };
 const X_RANGE = { min: 24, max: 72 };
-const Y_RANGE = { min: 26, max: 76 };
 
-function readLayout(): { x: number; y: number } {
+function readLayout(): { x: number } {
   try {
     const raw = localStorage.getItem(LAYOUT_KEY);
     if (!raw) return DEFAULT_SPLIT;
-    const parsed = JSON.parse(raw) as Partial<{ x: number; y: number }>;
+    const parsed = JSON.parse(raw) as Partial<{ x: number }>;
     return {
       x:
         typeof parsed.x === "number" && Number.isFinite(parsed.x)
           ? clamp(parsed.x, X_RANGE.min, X_RANGE.max)
           : DEFAULT_SPLIT.x,
-      y:
-        typeof parsed.y === "number" && Number.isFinite(parsed.y)
-          ? clamp(parsed.y, Y_RANGE.min, Y_RANGE.max)
-          : DEFAULT_SPLIT.y,
     };
   } catch {
     return DEFAULT_SPLIT;
   }
 }
 
-function saveLayout(next: { x: number; y: number }): void {
+function saveLayout(next: { x: number }): void {
   try {
     localStorage.setItem(LAYOUT_KEY, JSON.stringify(next));
   } catch {
@@ -134,9 +90,7 @@ function saveLayout(next: { x: number; y: number }): void {
 }
 
 interface SplitterProps {
-  axis: "vertical" | "horizontal";
   containerRef: RefObject<HTMLElement | null>;
-  cssVar: "--split-x" | "--split-y";
   value: number;
   defaultValue: number;
   min: number;
@@ -145,11 +99,9 @@ interface SplitterProps {
   onCommit: (value: number) => void;
 }
 
-/** Thanh kéo thay đổi tỉ lệ hai khung kề nhau (hỗ trợ chuột/cảm ứng, bàn phím và nhấp đúp để đặt lại). */
+/** Thanh kéo dọc chỉnh độ rộng hai khung (hỗ trợ chuột/cảm ứng, bàn phím và nhấp đúp để đặt lại). */
 const Splitter = memo(function Splitter({
-  axis,
   containerRef,
-  cssVar,
   value,
   defaultValue,
   min,
@@ -158,13 +110,12 @@ const Splitter = memo(function Splitter({
   onCommit,
 }: SplitterProps) {
   const dragRef = useRef<{ grabOffset: number; latest: number } | null>(null);
-  const isVertical = axis === "vertical";
 
   const applyLive = useCallback(
     (pct: number) => {
-      containerRef.current?.style.setProperty(cssVar, String(pct));
+      containerRef.current?.style.setProperty("--split-x", String(pct));
     },
-    [containerRef, cssVar],
+    [containerRef],
   );
 
   const measurePct = (e: PointerEvent<HTMLDivElement>, grabOffset: number): number | null => {
@@ -172,17 +123,10 @@ const Splitter = memo(function Splitter({
     if (!host) return null;
     const rect = host.getBoundingClientRect();
     const cs = getComputedStyle(host);
-    const handleSize = isVertical ? e.currentTarget.offsetWidth : e.currentTarget.offsetHeight;
-    if (isVertical) {
-      const padL = parseFloat(cs.paddingLeft);
-      const usable = rect.width - padL - parseFloat(cs.paddingRight) - handleSize;
-      if (usable <= 0) return null;
-      return clamp(((e.clientX - grabOffset - rect.left - padL) / usable) * 100, min, max);
-    }
-    const padT = parseFloat(cs.paddingTop);
-    const usable = rect.height - padT - parseFloat(cs.paddingBottom) - handleSize;
+    const padL = parseFloat(cs.paddingLeft);
+    const usable = rect.width - padL - parseFloat(cs.paddingRight) - e.currentTarget.offsetWidth;
     if (usable <= 0) return null;
-    return clamp(((e.clientY - grabOffset - rect.top - padT) / usable) * 100, min, max);
+    return clamp(((e.clientX - grabOffset - rect.left - padL) / usable) * 100, min, max);
   };
 
   const finishDrag = (e: PointerEvent<HTMLDivElement>) => {
@@ -193,14 +137,14 @@ const Splitter = memo(function Splitter({
     const final = Math.round(dragRef.current.latest * 10) / 10;
     dragRef.current = null;
     e.currentTarget.removeAttribute("data-dragging");
-    document.body.classList.remove("is-resizing-col", "is-resizing-row");
+    document.body.classList.remove("is-resizing-col");
     onCommit(final);
   };
 
   const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
     const step = e.shiftKey ? 5 : 2;
-    const dec = isVertical ? e.key === "ArrowLeft" : e.key === "ArrowUp";
-    const inc = isVertical ? e.key === "ArrowRight" : e.key === "ArrowDown";
+    const dec = e.key === "ArrowLeft";
+    const inc = e.key === "ArrowRight";
     if (dec || inc) {
       e.preventDefault();
       e.stopPropagation();
@@ -217,11 +161,11 @@ const Splitter = memo(function Splitter({
 
   return (
     <div
-      className={isVertical ? "splitter splitter-v" : "splitter splitter-h"}
+      className="splitter splitter-v"
       role="separator"
       tabIndex={0}
       aria-label={label}
-      aria-orientation={axis}
+      aria-orientation="vertical"
       aria-valuemin={min}
       aria-valuemax={max}
       aria-valuenow={Math.round(value)}
@@ -230,11 +174,10 @@ const Splitter = memo(function Splitter({
         if (e.button !== 0) return;
         e.preventDefault();
         const r = e.currentTarget.getBoundingClientRect();
-        const grabOffset = isVertical ? e.clientX - r.left : e.clientY - r.top;
-        dragRef.current = { grabOffset, latest: value };
+        dragRef.current = { grabOffset: e.clientX - r.left, latest: value };
         e.currentTarget.setAttribute("data-dragging", "true");
         e.currentTarget.setPointerCapture(e.pointerId);
-        document.body.classList.add(isVertical ? "is-resizing-col" : "is-resizing-row");
+        document.body.classList.add("is-resizing-col");
       }}
       onPointerMove={(e) => {
         const drag = dragRef.current;
@@ -262,31 +205,24 @@ export function ControlWindow() {
   const stage = useRef<StageHandle>(null);
   const prompter = usePrompter(stage);
   const mainRef = useRef<HTMLElement>(null);
-  const rightRef = useRef<HTMLElement>(null);
   const [split, setSplit] = useState(readLayout);
+  const [displayOpen, setDisplayOpen] = useState(false);
+  const [appOpen, setAppOpen] = useState(false);
+  const gearRef = useRef<HTMLButtonElement>(null);
 
   useLayoutEffect(() => {
     mainRef.current?.style.setProperty("--split-x", String(split.x));
   }, [split.x]);
 
-  useLayoutEffect(() => {
-    rightRef.current?.style.setProperty("--split-y", String(split.y));
-  }, [split.y]);
-
   const commitX = useCallback((x: number) => {
-    setSplit((prev) => {
-      const next = { ...prev, x };
-      saveLayout(next);
-      return next;
-    });
+    const next = { x };
+    saveLayout(next);
+    setSplit(next);
   }, []);
 
-  const commitY = useCallback((y: number) => {
-    setSplit((prev) => {
-      const next = { ...prev, y };
-      saveLayout(next);
-      return next;
-    });
+  const closeDisplay = useCallback(() => {
+    setDisplayOpen(false);
+    gearRef.current?.focus({ preventScroll: true });
   }, []);
 
   return (
@@ -302,6 +238,13 @@ export function ControlWindow() {
           </div>
           <ProjectionBar />
           <ThemeToggle />
+          <IconButton
+            label="Cài đặt"
+            tooltip="Cài đặt"
+            variant="ghost"
+            icon={<Icon name="settings" />}
+            onClick={() => setAppOpen(true)}
+          />
         </header>
 
         <main ref={mainRef}>
@@ -310,9 +253,7 @@ export function ControlWindow() {
           </div>
 
           <Splitter
-            axis="vertical"
             containerRef={mainRef}
-            cssVar="--split-x"
             value={split.x}
             defaultValue={DEFAULT_SPLIT.x}
             min={X_RANGE.min}
@@ -321,41 +262,32 @@ export function ControlWindow() {
             onCommit={commitX}
           />
 
-          <section ref={rightRef} className="card right" aria-label="Xem trước và điều khiển">
-            <div className="right-top">
-              <div className="bar">
-                <h3>Xem trước (giống màn chiếu, không lật gương)</h3>
-                <span className="hint">Nhấp vào dòng để đưa lên vạch đọc · lăn chuột để cuộn</span>
-              </div>
+          <section className="card right" aria-label="Xem trước và điều khiển">
+            <div className="bar">
+              <h3>Xem trước (giống màn chiếu, không lật gương)</h3>
+              <span className="hint">Nhấp vào dòng để đưa lên vạch đọc · lăn chuột để cuộn</span>
+              <IconButton
+                ref={gearRef}
+                size="sm"
+                variant={displayOpen ? "secondary" : "ghost"}
+                label="Cài đặt hiển thị"
+                tooltip="Cài đặt hiển thị"
+                aria-expanded={displayOpen}
+                aria-controls={displayOpen ? DISPLAY_SETTINGS_ID : undefined}
+                icon={<Icon name="settings" size={16} />}
+                onClick={() => (displayOpen ? closeDisplay() : setDisplayOpen(true))}
+              />
+            </div>
+            <div className="pv-area">
               <LivePreview stageRef={stage} prompter={prompter} />
-              <Progress prompter={prompter} />
-              <Transport prompter={prompter} />
+              {displayOpen && <DisplaySettingsDrawer onClose={closeDisplay} />}
             </div>
-
-            <Splitter
-              axis="horizontal"
-              containerRef={rightRef}
-              cssVar="--split-y"
-              value={split.y}
-              defaultValue={DEFAULT_SPLIT.y}
-              min={Y_RANGE.min}
-              max={Y_RANGE.max}
-              label="Chỉnh chiều cao khung xem trước và bảng cài đặt"
-              onCommit={commitY}
-            />
-
-            <div className="right-scroll">
-              <Collapsible
-                trigger={<span className="section-title">Cài đặt hiển thị</span>}
-                defaultIsOpen
-              >
-                <SettingsPanel />
-              </Collapsible>
-              <ShortcutHelp />
-            </div>
+            <Progress prompter={prompter} />
+            <Transport prompter={prompter} />
           </section>
         </main>
         <Footer />
+        <AppSettingsDialog isOpen={appOpen} onOpenChange={setAppOpen} />
       </div>
     </Theme>
   );

@@ -4,6 +4,7 @@ import { IconButton } from "@astryxdesign/core/IconButton";
 import { Slider } from "@astryxdesign/core/Slider";
 import type { Prompter } from "../hooks/usePrompter";
 import { mmss } from "../lib/format";
+import { RANGES } from "../settings";
 import { useStore } from "../state/store";
 import { Icon } from "./Icon";
 
@@ -35,6 +36,46 @@ export const Progress = memo(function Progress({ prompter }: { prompter: Prompte
         <span>{formatPercent(value)}</span>
         <span>Còn lại: {secondsLeft === null ? "--:--" : mmss(secondsLeft)}</span>
       </div>
+    </div>
+  );
+});
+
+const formatSpeed = (v: number) => v.toFixed(1);
+
+/** Tốc độ chạy: nút −/+ (bước 1) và thanh trượt (bước 0,5). */
+const SpeedRow = memo(function SpeedRow() {
+  const speed = useStore((s) => s.settings.speed);
+  const setSpeed = useStore((s) => s.setSpeed);
+  return (
+    <div className="speed">
+      <IconButton
+        size="sm"
+        variant="ghost"
+        label="Giảm tốc độ"
+        tooltip="Giảm tốc độ (↓)"
+        icon={<Icon name="minus" size={14} />}
+        onClick={() => setSpeed(useStore.getState().settings.speed - 1)}
+      />
+      <div className="speed-slider">
+        <Slider
+          label="Tốc độ chạy"
+          isLabelHidden
+          {...RANGES.speed}
+          value={speed}
+          valueDisplay="text"
+          formatValue={formatSpeed}
+          width="100%"
+          onChange={(v: number) => setSpeed(v)}
+        />
+      </div>
+      <IconButton
+        size="sm"
+        variant="ghost"
+        label="Tăng tốc độ"
+        tooltip="Tăng tốc độ (↑)"
+        icon={<Icon name="plus" size={14} />}
+        onClick={() => setSpeed(useStore.getState().settings.speed + 1)}
+      />
     </div>
   );
 });
@@ -73,6 +114,7 @@ export const Transport = memo(function Transport({ prompter }: { prompter: Promp
         icon={<Icon name="fast-forward" size={18} />}
         onClick={() => prompter.cmd({ action: "lines", value: 3 })}
       />
+      <SpeedRow />
     </div>
   );
 });
