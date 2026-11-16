@@ -16,13 +16,6 @@ body.is-resizing-col * {
   -webkit-user-select: none !important;
 }
 
-body.is-resizing-row,
-body.is-resizing-row * {
-  cursor: row-resize !important;
-  user-select: none !important;
-  -webkit-user-select: none !important;
-}
-
 .ico {
   flex: none;
   display: block;
@@ -329,7 +322,7 @@ body.is-resizing-row * {
   font-weight: 500;
 }
 
-/* Thanh kéo thay đổi kích cỡ 3 vùng chính */
+/* Thanh kéo chỉnh độ rộng khung kịch bản và khung xem trước */
 .splitter {
   position: relative;
   flex: none;
@@ -359,19 +352,6 @@ body.is-resizing-row * {
   height: 40px;
 }
 
-.splitter-h {
-  height: 12px;
-  cursor: row-resize;
-  background: var(--panel2);
-  border-top: var(--border-w) solid var(--line);
-  border-bottom: var(--border-w) solid var(--line);
-}
-
-.splitter-h::after {
-  width: 44px;
-  height: 4px;
-}
-
 .splitter:hover::after,
 .splitter:focus-visible::after,
 .splitter[data-dragging]::after {
@@ -383,16 +363,11 @@ body.is-resizing-row * {
   transform: scaleY(1.25);
 }
 
-.splitter-h:hover::after,
-.splitter-h[data-dragging]::after {
-  transform: scaleX(1.25);
-}
-
 .splitter:focus-visible::after {
   box-shadow: 0 0 0 2px var(--focus-ring);
 }
 
-/* Cố định Preview + Transport phía trên, phần Cài đặt & Phím tắt cuộn độc lập bên dưới */
+/* Xem trước chiếm phần còn lại; thanh tiến độ và điều khiển cố định bên dưới */
 .right {
   flex: 1;
   display: flex;
@@ -403,35 +378,55 @@ body.is-resizing-row * {
   overflow: hidden;
 }
 
-.right-top {
-  flex: none;
+.pv-area {
+  position: relative;
+  flex: 1;
   display: flex;
   flex-direction: column;
-  height: calc((100% - 12px) * var(--split-y, 52) / 100);
-  min-height: 240px;
-  max-height: calc(100% - 132px);
+  min-height: 0;
   overflow: hidden;
 }
 
-.right-scroll {
-  flex: 1;
-  min-height: 120px;
-  overflow-y: auto;
-  padding: var(--sp-2) var(--sp-4) var(--sp-4);
+.ds-drawer {
+  position: absolute;
+  inset: 0 0 0 auto;
+  width: min(400px, 100%);
   display: flex;
   flex-direction: column;
-  gap: var(--sp-2);
+  container-type: inline-size;
+  background: var(--panel);
+  border-left: var(--border-w) solid var(--line);
+  box-shadow: var(--shadow-dlg);
+  outline: 0;
+  animation: ds-slide 160ms ease-out;
 }
 
-.section-title {
-  display: inline-flex;
+@keyframes ds-slide {
+  from {
+    transform: translateX(24px);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ds-drawer {
+    animation: none;
+  }
+}
+
+.ds-head {
+  display: flex;
   align-items: center;
-  gap: var(--sp-2);
-  font-size: 12px;
-  text-transform: uppercase;
-  letter-spacing: 0.6px;
-  color: var(--accent);
-  font-weight: 700;
+  justify-content: space-between;
+  padding: var(--sp-2) var(--sp-2) var(--sp-2) var(--sp-4);
+  border-bottom: var(--border-w) solid var(--line);
+}
+
+.ds-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0 var(--sp-4) var(--sp-4);
 }
 
 .pvwrap {
@@ -481,10 +476,36 @@ body.is-resizing-row * {
 
 .transport {
   display: flex;
+  flex-wrap: wrap;
   gap: var(--sp-2);
   align-items: center;
   justify-content: center;
   padding: var(--sp-3) var(--sp-4);
+}
+
+.speed {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+  flex: 1 1 180px;
+  max-width: 300px;
+  min-width: 0;
+}
+
+.speed-slider {
+  flex: 1;
+  min-width: 0;
+}
+
+.app-settings .keys {
+  margin: 0;
+}
+
+.app-settings .dlg-sub {
+  color: var(--text);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
 }
 
 .settings {
@@ -518,10 +539,6 @@ body.is-resizing-row * {
   display: flex;
   align-items: center;
   gap: var(--sp-2);
-}
-
-.row-speed {
-  align-items: flex-end;
 }
 
 .row-slider {
@@ -636,20 +653,13 @@ body.is-resizing-row * {
     overflow: visible;
   }
 
-  .right-top {
-    height: auto;
-    min-height: 0;
-    max-height: none;
-    border-bottom: var(--border-w) solid var(--line);
+  .pv-area {
+    flex: none;
   }
 
   .pvwrap {
     flex: none;
     height: 260px;
-  }
-
-  .right-scroll {
-    overflow: visible;
   }
 }
 

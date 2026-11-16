@@ -1,5 +1,4 @@
 import { memo, useCallback, useEffect, useMemo, useState } from "react";
-import { IconButton } from "@astryxdesign/core/IconButton";
 import { SegmentedControl, SegmentedControlItem } from "@astryxdesign/core/SegmentedControl";
 import { Selector } from "@astryxdesign/core/Selector";
 import { Slider } from "@astryxdesign/core/Slider";
@@ -9,7 +8,6 @@ import { RANGES } from "../settings";
 import type { Settings } from "../settings";
 import { useStore } from "../state/store";
 import { ColorPicker } from "./ColorPicker";
-import { Icon } from "./Icon";
 
 type RangeKey = Exclude<keyof typeof RANGES, "speed">;
 type ColorKey = "fg" | "bg" | "cue" | "head" | "c1" | "c2" | "c3" | "c4" | "c5";
@@ -41,48 +39,10 @@ const CHECKS: { key: CheckKey; label: string }[] = [
   { key: "marker", label: "Hiện vạch đọc" },
 ];
 
-const formatSpeed = (v: number) => v.toFixed(1);
-
 /** Mỗi hàng chỉ theo dõi đúng một trường cài đặt, nên kéo một thanh trượt không làm vẽ lại cả bảng. */
 function useSetting<K extends keyof Settings>(key: K): Settings[K] {
   return useStore((s) => s.settings[key]);
 }
-
-const SpeedRow = memo(function SpeedRow() {
-  const speed = useSetting("speed");
-  const setSpeed = useStore((s) => s.setSpeed);
-  return (
-    <div className="row row-speed">
-      <IconButton
-        size="sm"
-        variant="ghost"
-        label="Giảm tốc độ"
-        tooltip="Giảm tốc độ (↓)"
-        icon={<Icon name="minus" size={14} />}
-        onClick={() => setSpeed(useStore.getState().settings.speed - 1)}
-      />
-      <div className="row-slider">
-        <Slider
-          label="Tốc độ chạy"
-          {...RANGES.speed}
-          value={speed}
-          valueDisplay="text"
-          formatValue={formatSpeed}
-          width="100%"
-          onChange={(v: number) => setSpeed(v)}
-        />
-      </div>
-      <IconButton
-        size="sm"
-        variant="ghost"
-        label="Tăng tốc độ"
-        tooltip="Tăng tốc độ (↑)"
-        icon={<Icon name="plus" size={14} />}
-        onClick={() => setSpeed(useStore.getState().settings.speed + 1)}
-      />
-    </div>
-  );
-});
 
 const RangeRow = memo(function RangeRow({
   settingKey,
@@ -150,7 +110,6 @@ const SwitchRow = memo(function SwitchRow({
 const TextOptions = memo(function TextOptions() {
   const font = useSetting("font");
   const align = useSetting("align");
-  const countdown = useSetting("countdown");
   const set = useStore((s) => s.setSetting);
   const [systemFonts, setSystemFonts] = useState<string[]>([]);
 
@@ -198,22 +157,6 @@ const TextOptions = memo(function TextOptions() {
           <SegmentedControlItem value="center" label="Giữa" />
         </SegmentedControl>
       </div>
-      <div className="opt-field">
-        <span className="opt-label" aria-hidden="true">
-          Đếm ngược khi bắt đầu
-        </span>
-        <SegmentedControl
-          className="seg-match"
-          label="Đếm ngược khi bắt đầu"
-          layout="fill"
-          value={String(countdown)}
-          onChange={(v) => set("countdown", Number(v) as Settings["countdown"])}
-        >
-          <SegmentedControlItem value="0" label="Tắt" />
-          <SegmentedControlItem value="3" label="3 giây" />
-          <SegmentedControlItem value="5" label="5 giây" />
-        </SegmentedControl>
-      </div>
     </div>
   );
 });
@@ -222,8 +165,7 @@ export const SettingsPanel = memo(function SettingsPanel() {
   return (
     <div className="settings">
       <fieldset className="grp">
-        <legend className="grp-title">Tốc độ và bố cục chữ</legend>
-        <SpeedRow />
+        <legend className="grp-title">Bố cục chữ</legend>
         {RANGE_ROWS.map(({ key, label, format }) => (
           <RangeRow key={key} settingKey={key} label={label} format={format} />
         ))}
