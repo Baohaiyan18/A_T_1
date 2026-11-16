@@ -4,12 +4,14 @@ import { Button } from "@astryxdesign/core/Button";
 import { SegmentedControl, SegmentedControlItem } from "@astryxdesign/core/SegmentedControl";
 import { openScriptFile, saveScriptFile } from "../bridge/files";
 import type { Prompter } from "../hooks/usePrompter";
-import { useStore } from "../state/store";
+import { activeTab, useActiveText, useStore } from "../state/store";
 import { Icon } from "./Icon";
 import { ScriptReader } from "./ScriptReader";
+import { ScriptTabs } from "./ScriptTabs";
 
 export const ScriptEditor = memo(function ScriptEditor({ prompter }: { prompter: Prompter }) {
-  const text = useStore((s) => s.text);
+  const text = useActiveText();
+  const activeId = useStore((s) => s.activeId);
   const setText = useStore((s) => s.setText);
   const area = useRef<HTMLTextAreaElement>(null);
   const [error, setError] = useState("");
@@ -35,10 +37,10 @@ export const ScriptEditor = memo(function ScriptEditor({ prompter }: { prompter:
   const open = async () => {
     setError("");
     try {
-      const content = await openScriptFile();
-      if (content === null) return;
-      setText(content);
-      prompter.cmd({ action: "reset" });
+      const file = await openScriptFile();
+      if (file === null) return;
+      const { addTab } = useStore.getState();
+      prompter.selectTab(addTab(file.name, file.text));
     } catch (err) {
       setError(String(err));
     }
@@ -47,7 +49,8 @@ export const ScriptEditor = memo(function ScriptEditor({ prompter }: { prompter:
   const save = async () => {
     setError("");
     try {
-      await saveScriptFile(useStore.getState().text);
+      const tab = activeTab(useStore.getState());
+      await saveScriptFile(tab.text, tab.name);
     } catch (err) {
       setError(String(err));
     }
@@ -92,6 +95,7 @@ export const ScriptEditor = memo(function ScriptEditor({ prompter }: { prompter:
           onClick={fromCursor}
         />
       </div>
+      <ScriptTabs prompter={prompter} />
       {error && (
         <div className="editor-banner" role="alert">
           <Banner
@@ -104,8 +108,10 @@ export const ScriptEditor = memo(function ScriptEditor({ prompter }: { prompter:
           />
         </div>
       )}
-      {/* Ẩn chứ không bỏ textarea để giữ nguyên vị trí con trỏ khi quay lại MD. */}
+      {/* Ẩn chứ không bỏ textarea để giữ nguyên vị trí con trỏ khi quay lại MD.
+          Đổi `key` theo tab để mỗi tab có ô gõ riêng (lịch sử hoàn tác không lẫn giữa các tab). */}
       <textarea
+        key={activeId}
         ref={area}
         hidden={preview}
         aria-labelledby="script-heading"

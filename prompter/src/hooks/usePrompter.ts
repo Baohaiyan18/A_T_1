@@ -4,8 +4,9 @@ import { controlChannel } from "../bridge/bus";
 import type { StageHandle } from "../components/Stage";
 import { createEngine, runCmd, secondsLeft, step } from "../engine/engine";
 import type { Command } from "../engine/engine";
+import { clamp } from "../lib/clamp";
 import { resolveKey } from "../shortcuts";
-import { useStore } from "../state/store";
+import { activeTab, neighborId, useStore } from "../state/store";
 
 /** Sau khi gửi lệnh, bỏ qua vị trí màn chiếu báo về trong khoảng này để không bị giật ngược. */
 const IGNORE_AFTER_CMD_MS = 200;
@@ -23,6 +24,12 @@ export interface Prompter {
   seekRatio(ratio: number): void;
   /** Đưa dòng thứ `index` của kịch bản lên vạch đọc. */
   seekLine(index: number): void;
+  /** Chuyển sang tab `id`: dừng chạy, nhớ vị trí tab cũ, mở tab mới ở vị trí đã nhớ. */
+  selectTab(id: string): void;
+  /** Đóng tab `id` (đang chọn thì chuyển sang tab kề bên trước). */
+  closeTab(id: string): void;
+  /** Khung xem trước báo đã dựng xong chữ của `text`. */
+  linesRendered(text: string): void;
 }
 
 /**
@@ -35,12 +42,36 @@ export function usePrompter(stage: RefObject<StageHandle | null>): Prompter {
   const engine = useRef(createEngine());
   const sync = useRef({ lastMsg: -Infinity, ignoreUntil: 0 });
 
+  // Chữ khung xem trước đã dựng, và vị trí của tab vừa chọn đang chờ chữ đó dựng xong.
+  // Đặt vị trí sớm hơn thì bị kẹp theo chiều dài kịch bản cũ.
+  const rendered = useRef<string | null>(null);
+  const pending = useRef<{ text: string; pos: number } | null>(null);
+
   const prompter = useMemo<Prompter>(() => {
     const max = () => stage.current?.maxPos() ?? 0;
     const cmd = (command: Command) => {
       runCmd(engine.current, command, max(), useStore.getState().settings);
       controlChannel().send({ type: "cmd", cmd: command });
       sync.current.ignoreUntil = performance.now() + IGNORE_AFTER_CMD_MS;
+    };
+    const place = (pos: number) => {
+      engine.current.pos = clamp(pos, 0, max());
+    };
+    const selectTab = (id: string) => {
+      const state = useStore.getState();
+      if (id === state.activeId || !state.tabs.some((t) => t.id === id)) return;
+      cmd({ action: "pause" });
+      // Vị trí tab hiện tại còn chờ đặt (chuyển tab nhanh) thì `engine.pos` chưa phải của nó: giữ vị trí đã lưu.
+      if (!pending.current) state.setTabPos(state.activeId, engine.current.pos);
+      state.selectTab(id);
+      const tab = activeTab(useStore.getState());
+      controlChannel().send({ type: "load", text: tab.text, pos: tab.pos });
+      if (tab.text === rendered.current) {
+        pending.current = null;
+        place(tab.pos);
+      } else {
+        pending.current = { text: tab.text, pos: tab.pos };
+      }
     };
     return {
       cmd,
@@ -49,6 +80,21 @@ export function usePrompter(stage: RefObject<StageHandle | null>): Prompter {
       seekLine: (index) => {
         const st = stage.current;
         if (st) cmd({ action: "seek", value: st.lineTop(index) });
+      },
+      selectTab,
+      closeTab: (id) => {
+        const { tabs, activeId } = useStore.getState();
+        if (tabs.length <= 1) return;
+        if (id === activeId) selectTab(neighborId(tabs, id));
+        useStore.getState().closeTab(id);
+      },
+      linesRendered: (text) => {
+        rendered.current = text;
+        const p = pending.current;
+        if (p && p.text === text) {
+          pending.current = null;
+          place(p.pos);
+        }
       },
     };
   }, [stage]);
@@ -106,7 +152,7 @@ export function usePrompter(stage: RefObject<StageHandle | null>): Prompter {
           channel.send({
             type: "init",
             settings: state.settings,
-            text: state.text,
+            text: activeTab(state).text,
             pos: e.pos,
             playing: e.playing,
           });
@@ -134,10 +180,11 @@ export function usePrompter(stage: RefObject<StageHandle | null>): Prompter {
     const unsubscribe = useStore.subscribe((state, prev) => {
       if (state.settings !== prev.settings)
         channel.send({ type: "settings", settings: state.settings });
-      if (state.text !== prev.text) {
+      // Chuyển tab thì `selectTab` đã gửi tin `load`; ở đây chỉ gửi khi gõ trong cùng một tab.
+      if (state.activeId === prev.activeId && activeTab(state).text !== activeTab(prev).text) {
         clearTimeout(timer);
         timer = setTimeout(
-          () => channel.send({ type: "script", text: useStore.getState().text }),
+          () => channel.send({ type: "script", text: activeTab(useStore.getState()).text }),
           SCRIPT_DEBOUNCE_MS,
         );
       }

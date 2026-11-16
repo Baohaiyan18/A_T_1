@@ -20,7 +20,8 @@ export type IconName =
   | "check-circle"
   | "sun"
   | "moon"
-  | "keyboard";
+  | "keyboard"
+  | "x";
 
 const PATHS: Record<IconName, ReactNode> = {
   "folder-open": (
@@ -104,6 +105,12 @@ const PATHS: Record<IconName, ReactNode> = {
     </>
   ),
   minus: <path d="M5 12h14" />,
+  x: (
+    <>
+      <path d="M18 6 6 18" />
+      <path d="m6 6 12 12" />
+    </>
+  ),
   plus: (
     <>
       <path d="M5 12h14" />

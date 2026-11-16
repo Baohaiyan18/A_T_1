@@ -2,7 +2,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { setClassRule } from "../lib/dynamicSheet";
 import { parseScript } from "../script/parse";
-import { useStore } from "../state/store";
+import { useActiveText, useStore } from "../state/store";
 import { Lines } from "./Stage";
 
 /**
@@ -11,7 +11,7 @@ import { Lines } from "./Stage";
  * không đủ tương phản trên nền sáng của app.
  */
 export function ScriptReader() {
-  const text = useStore((s) => s.text);
+  const text = useActiveText();
   // Chỉ theo dõi các trường màu để đổi tốc độ/cỡ chữ không vẽ lại bản đọc.
   const s = useStore(
     useShallow(({ settings: c }) => ({

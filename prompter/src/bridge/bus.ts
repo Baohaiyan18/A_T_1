@@ -9,6 +9,8 @@ export type CtlMsg =
   | { type: "init"; settings: Settings; text: string; pos: number; playing: boolean }
   | { type: "settings"; settings: Settings }
   | { type: "script"; text: string }
+  /** Chuyển tab: nội dung và vị trí đi cùng nhau để dựng chữ xong mới đặt vị trí. */
+  | { type: "load"; text: string; pos: number }
   | { type: "cmd"; cmd: Command };
 
 /** Tin từ màn chiếu gửi về màn điều khiển. */

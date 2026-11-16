@@ -52,6 +52,12 @@ export function OutputWindow() {
           engine.current.playing = msg.playing;
           engine.current.counting = 0;
           break;
+        case "load":
+          flushSync(() => setText(msg.text));
+          engine.current.pos = clamp(msg.pos, 0, max());
+          engine.current.playing = false;
+          engine.current.counting = 0;
+          break;
         case "settings":
           live.current = msg.settings;
           setSettings(msg.settings);
