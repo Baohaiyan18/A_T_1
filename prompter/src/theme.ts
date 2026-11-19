@@ -2,25 +2,27 @@ import { defineTheme } from "@astryxdesign/core/theme";
 import { neutralTheme } from "@astryxdesign/theme-neutral/built";
 
 /**
- * Brand theme derived from the 6 colors of public/logo.png:
- * - Primary accent: Indigo (#5664ae) in light mode, Cyan (#00b3e4) in dark mode
- * - Cool-tinted surfaces and borders generated via Astryx HCT color scale
- * - Semantic statuses aligned to logo Green (#8fc84f), Amber (#ffc337), Coral (#f2664e), Cyan (#00b3e4)
+ * Theme theo nhận diện Rec Media (logo đỏ #be1f2c + đen):
+ * - Màu nhấn (nút, hover, viền chọn, focus): đỏ thương hiệu ở chế độ Sáng, đỏ sáng hơn ở chế độ Tối
+ *   để chữ trắng trên nút và chữ đỏ trên nền tối vẫn đạt tương phản >= 4.5:1.
+ * - Nền và viền xám trung tính (không ngả xanh) cho hợp đỏ/đen.
+ * - Màu trạng thái giữ nguyên: xanh lá (thành công), vàng (cảnh báo), coral (lỗi), cyan (thông tin).
  */
 export const prompterTheme = defineTheme({
   name: "prompter",
   extends: neutralTheme,
   color: {
-    accent: ["#5664ae", "#00b3e4"],
-    neutralStyle: "cool",
+    accent: ["#be1f2c", "#d92b3a"],
+    neutralStyle: "neutral",
   },
   tokens: {
-    // Keep exact logo hues for primary accent while maintaining >= 4.5:1 contrast with on-accent ink.
-    "--color-accent": ["#5664ae", "#00b3e4"],
-    "--color-on-accent": ["#ffffff", "#001e2b"],
+    // Nút: chữ trắng trên đỏ (6.1:1 sáng, 4.8:1 tối). Chữ đỏ trên nền tối dùng đỏ nhạt hơn (~6:1).
+    "--color-accent": ["#be1f2c", "#d92b3a"],
+    "--color-on-accent": "#ffffff",
+    "--color-text-accent": ["#be1f2c", "#ff6b76"],
 
     // Solid muted surface so card bars, tips, and setting groups remain distinct on dark panels.
-    "--color-background-muted": ["#e9ebf6", "#1c282e"],
+    "--color-background-muted": ["#f0f0f0", "#242424"],
 
     // Success (logo Green #8fc84f family)
     "--color-success": ["#306c00", "#8fc84f"],

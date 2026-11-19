@@ -164,43 +164,59 @@
   display: flex;
 }
 
-/* Đồng hồ góc trên-phải; nằm trong `.flip` nên lật theo gương cùng chữ. */
-.stage .timer {
+/* Lớp chữ chạy; nằm trong `.flip` nên lật gương cùng chữ. */
+.stage .tickers {
   position: absolute;
-  top: 0.4em;
-  right: 0.5em;
-  display: none;
-  padding: 0.1em 0.45em;
-  border: 0;
-  border-radius: 0.3em;
-  /* Đủ đậm để số vẫn rõ khi màu nền màn chiếu sáng. */
-  background: rgba(0, 0, 0, 0.78);
-  color: #3ddc84;
-  font-family: var(--font-sans);
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  line-height: 1.2;
+  inset: 0;
+  overflow: hidden;
   pointer-events: none;
 }
 
-.stage .timer.show {
-  display: block;
+.stage .tk {
+  position: absolute;
+  overflow: hidden;
+  font-family: var(--font-sans);
+  font-weight: 700;
+  line-height: 1.4;
 }
 
-.stage .timer.over {
-  color: #ff4d4f;
+.stage .tk-text {
+  will-change: transform;
 }
 
-.stage button.timer {
+.stage .tk.h .tk-text {
+  display: inline-block;
+  padding: 0 0.3em;
+  white-space: pre;
+}
+
+.stage .tk.v {
+  max-width: 100%;
+}
+
+.stage .tk.v .tk-text {
+  padding: 0 0.4em;
+  white-space: pre-wrap;
+}
+
+/* Đang tắt hoặc đã chạy đủ số lượt: màn chiếu ẩn, khung xem trước hiện mờ để còn kéo vị trí. */
+.stage .tk.idle {
+  visibility: hidden;
+}
+
+.stage .tk.edit {
   pointer-events: auto;
-  cursor: pointer;
+  cursor: move;
+  touch-action: none;
 }
 
-.stage button.timer:hover {
-  background: rgba(0, 0, 0, 0.9);
+.stage .tk.edit:hover,
+.stage .tk.edit.idle {
+  outline: 1px dashed rgba(255, 255, 255, 0.7);
+  outline-offset: -1px;
 }
 
-.stage button.timer:focus-visible {
-  outline: 2px solid var(--focus-ring, #ffffff);
-  outline-offset: 2px;
+.stage .tk.edit.idle {
+  visibility: visible;
+  opacity: 0.45;
 }

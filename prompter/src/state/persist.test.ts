@@ -18,7 +18,7 @@ function memoryStorage(initial: Record<string, unknown> = {}) {
 
 beforeEach(() => {
   vi.useFakeTimers();
-  const tab = newTab("Kịch bản 1");
+  const tab = newTab("1");
   useStore.setState({ settings: DEFAULT_SETTINGS, tabs: [tab], activeId: tab.id });
 });
 
@@ -85,24 +85,34 @@ describe("sanitizeTabs", () => {
     expect(sanitizeTabs({ tabs: [{ id: "a", name: "", text: "x" }] })).toBeNull();
   });
 
-  it("bỏ tab hỏng/trùng id, sửa pos/targetSec sai, activeId lạ thì chọn tab đầu", () => {
+  it("bỏ tab hỏng/trùng id, sửa pos sai, bỏ trường thừa, activeId lạ thì chọn tab đầu", () => {
     const r = sanitizeTabs({
       tabs: [
-        { id: "a", name: " A ", text: "x", pos: -3, targetSec: "60" },
+        { id: "a", name: " A ", text: "x", pos: -3, targetSec: 60 },
         { id: "a", name: "Trùng", text: "y" },
         { id: "b", name: "B", text: 5 },
         null,
-        { id: "c", name: "C", text: "", pos: 10, targetSec: 30 },
+        { id: "c", name: "C", text: "", pos: 10 },
       ],
       activeId: "zz",
     });
     expect(r).toEqual({
       tabs: [
-        { id: "a", name: "A", text: "x", pos: 0, targetSec: 0 },
-        { id: "c", name: "C", text: "", pos: 10, targetSec: 30 },
+        { id: "a", name: "A", text: "x", pos: 0 },
+        { id: "c", name: "C", text: "", pos: 10 },
       ],
       activeId: "a",
     });
+  });
+
+  it('đổi tên mặc định cũ "Kịch bản N" thành "N", giữ tên tự đặt', () => {
+    const r = sanitizeTabs({
+      tabs: [
+        { id: "a", name: "Kịch bản 2", text: "" },
+        { id: "b", name: "Kịch bản mở đầu", text: "" },
+      ],
+    });
+    expect(r?.tabs.map((t) => t.name)).toEqual(["2", "Kịch bản mở đầu"]);
   });
 });
 
@@ -111,7 +121,7 @@ describe("initPersistence", () => {
     const stop = await initPersistence(memoryStorage().storage);
     expect(useStore.getState().settings).toEqual(DEFAULT_SETTINGS);
     expect(text()).toBe(SAMPLE_SCRIPT);
-    expect(useStore.getState().tabs.map((t) => t.name)).toEqual(["Kịch bản 1"]);
+    expect(useStore.getState().tabs.map((t) => t.name)).toEqual(["1"]);
     stop();
   });
 
@@ -119,7 +129,7 @@ describe("initPersistence", () => {
     const { storage, data } = memoryStorage({ settings: { speed: 30 }, script: "" });
     const stop = await initPersistence(storage);
     expect(useStore.getState().settings.speed).toBe(30);
-    expect(useStore.getState().tabs).toMatchObject([{ name: "Kịch bản 1", text: "", pos: 0 }]);
+    expect(useStore.getState().tabs).toMatchObject([{ name: "1", text: "", pos: 0 }]);
     expect(data.get("script")).toBe("");
     stop();
   });
@@ -127,8 +137,8 @@ describe("initPersistence", () => {
   it("nạp các tab đã lưu, ưu tiên hơn khóa script cũ", async () => {
     const saved = {
       tabs: [
-        { id: "a", name: "Mở đầu", text: "A", pos: 50, targetSec: 90 },
-        { id: "b", name: "Kết", text: "B", pos: 0, targetSec: 0 },
+        { id: "a", name: "Mở đầu", text: "A", pos: 50 },
+        { id: "b", name: "Kết", text: "B", pos: 0 },
       ],
       activeId: "b",
     };

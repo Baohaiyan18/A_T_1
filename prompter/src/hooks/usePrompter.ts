@@ -5,9 +5,8 @@ import type { StageHandle } from "../components/Stage";
 import { createEngine, runCmd, secondsLeft, step } from "../engine/engine";
 import type { Command } from "../engine/engine";
 import { clamp } from "../lib/clamp";
-import { timerView } from "../lib/timer";
 import { resolveKey } from "../shortcuts";
-import { activeTab, activeTimer, neighborId, useStore } from "../state/store";
+import { activeTab, neighborId, useStore } from "../state/store";
 
 /** Sau khi gửi lệnh, bỏ qua vị trí màn chiếu báo về trong khoảng này để không bị giật ngược. */
 const IGNORE_AFTER_CMD_MS = 200;
@@ -117,15 +116,6 @@ export function usePrompter(stage: RefObject<StageHandle | null>): Prompter {
         step(e, dt, max, settings);
         st.render(e.pos);
         st.showCount(e.counting);
-        // Đồng hồ bắt đầu khi chữ thực sự chạy (sau đếm ngược), từ bất kỳ nguồn nào: nút, phím, màn chiếu.
-        const tab = activeTab(state);
-        const now = Date.now();
-        let startedAt = state.timers[tab.id] ?? null;
-        if (e.playing && startedAt === null) {
-          startedAt = now;
-          state.startTimer(tab.id, now);
-        }
-        st.showTimer(timerView(startedAt, tab.targetSec, now));
         if (t - lastUi > 150) {
           lastUi = t;
           const next = {
@@ -165,7 +155,7 @@ export function usePrompter(stage: RefObject<StageHandle | null>): Prompter {
             text: activeTab(state).text,
             pos: e.pos,
             playing: e.playing,
-            timer: activeTimer(state),
+            tickers: state.tickers,
           });
           break;
         case "pos":
@@ -184,18 +174,14 @@ export function usePrompter(stage: RefObject<StageHandle | null>): Prompter {
     });
   }, []);
 
-  // Gửi cài đặt và kịch bản sang màn chiếu khi chúng thay đổi.
+  // Gửi cài đặt, chữ chạy và kịch bản sang màn chiếu khi chúng thay đổi.
   useEffect(() => {
     const channel = controlChannel();
     let timer: ReturnType<typeof setTimeout> | undefined;
     const unsubscribe = useStore.subscribe((state, prev) => {
       if (state.settings !== prev.settings)
         channel.send({ type: "settings", settings: state.settings });
-      // Gồm cả chuyển tab: đồng hồ màn chiếu đổi theo tab mới.
-      const clock = activeTimer(state);
-      const before = activeTimer(prev);
-      if (clock.startedAt !== before.startedAt || clock.targetSec !== before.targetSec)
-        channel.send({ type: "timer", ...clock });
+      if (state.tickers !== prev.tickers) channel.send({ type: "tickers", tickers: state.tickers });
       // Chuyển tab thì `selectTab` đã gửi tin `load`; ở đây chỉ gửi khi gõ trong cùng một tab.
       if (state.activeId === prev.activeId && activeTab(state).text !== activeTab(prev).text) {
         clearTimeout(timer);
@@ -219,7 +205,7 @@ export function usePrompter(stage: RefObject<StageHandle | null>): Prompter {
       if (
         ev.target instanceof Element &&
         ev.target.closest(
-          "textarea,input,select,[role='combobox'],[role='listbox'],[role='slider'],[role='radiogroup'],[role='dialog']",
+          "textarea,input,select,[contenteditable],[role='combobox'],[role='listbox'],[role='slider'],[role='radiogroup'],[role='dialog']",
         )
       )
         return;

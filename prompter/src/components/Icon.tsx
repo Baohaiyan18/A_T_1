@@ -22,9 +22,25 @@ export type IconName =
   | "moon"
   | "keyboard"
   | "x"
-  | "settings";
+  | "settings"
+  | "trash"
+  | "ticker";
 
 const PATHS: Record<IconName, ReactNode> = {
+  trash: (
+    <>
+      <path d="M3 6h18" />
+      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+      <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+    </>
+  ),
+  ticker: (
+    <>
+      <rect x="2" y="7" width="20" height="10" rx="2" />
+      <path d="M7 12h10" />
+      <path d="m10 9-3 3 3 3" />
+    </>
+  ),
   "folder-open": (
     <path d="m6 14 1.5-2.9A2 2 0 0 1 9.24 10H20a2 2 0 0 1 1.94 2.5l-1.54 6a2 2 0 0 1-1.95 1.5H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3.9a2 2 0 0 1 1.69.9l.81 1.2a2 2 0 0 0 1.67.9H18a2 2 0 0 1 2 2v2" />
   ),

@@ -58,7 +58,7 @@ pub async fn open_output(
     let win = match app.get_webview_window(LABEL) {
         Some(win) => win,
         None => WebviewWindowBuilder::new(&app, LABEL, WebviewUrl::App("index.html".into()))
-            .title("Prompter – Màn chiếu")
+            .title("Rec Media – Màn chiếu")
             .decorations(false)
             .visible(false)
             .build()

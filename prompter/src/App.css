@@ -1,11 +1,8 @@
 :root {
-  /* 1. Primitive Tokens: 6 sắc màu nguyên bản trích xuất từ Logo (dùng cho trang trí, không dùng cho chữ) */
-  --logo-cyan: #00b3e4;
-  --logo-indigo: #5664ae;
-  --logo-rose: #f05a84;
+  /* 1. Primitive Tokens: đỏ thương hiệu Rec Media (lấy từ logo); coral/amber là màu vạch đọc và số đếm ngược trên màn chiếu */
+  --brand-red: #be1f2c;
   --logo-coral: #f2664e;
   --logo-amber: #ffc337;
-  --logo-green: #8fc84f;
 
   /* 2. Typography Token: Duy nhất 1 font Roboto */
   --font-sans: "Roboto", "Segoe UI", sans-serif;

@@ -1,16 +1,15 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { mmss } from "../lib/format";
 import { DEFAULT_SETTINGS } from "../settings";
-import { activeTab, activeTimer, newTab, useStore } from "./store";
+import { activeTab, newTab, useStore } from "./store";
 
-const first = newTab("Kịch bản 1", "A");
+const first = newTab("1", "A");
 
 beforeEach(() => {
   useStore.setState({
     settings: DEFAULT_SETTINGS,
     tabs: [first],
     activeId: first.id,
-    timers: {},
   });
 });
 
@@ -21,16 +20,16 @@ describe("tab kịch bản", () => {
     const { addTab } = useStore.getState();
     const id = addTab();
     addTab("Mở đầu", "nội dung");
-    expect(names()).toEqual(["Kịch bản 1", "Kịch bản 2", "Mở đầu"]);
+    expect(names()).toEqual(["1", "2", "Mở đầu"]);
     expect(useStore.getState().activeId).toBe(first.id);
-    expect(useStore.getState().tabs[1]).toMatchObject({ id, text: "", pos: 0, targetSec: 0 });
+    expect(useStore.getState().tabs[1]).toMatchObject({ id, text: "", pos: 0 });
   });
 
   it("addTab với tên rỗng/toàn khoảng trắng dùng tên mặc định, có tên thì cắt khoảng trắng", () => {
     const { addTab } = useStore.getState();
     addTab("   ", "x");
     addTab("  Kết  ");
-    expect(names()).toEqual(["Kịch bản 1", "Kịch bản 2", "Kết"]);
+    expect(names()).toEqual(["1", "2", "Kết"]);
   });
 
   it("tên mặc định lấp chỗ trống", () => {
@@ -39,7 +38,7 @@ describe("tab kịch bản", () => {
     addTab();
     closeTab(second);
     addTab();
-    expect(names()).toEqual(["Kịch bản 1", "Kịch bản 3", "Kịch bản 2"]);
+    expect(names()).toEqual(["1", "3", "2"]);
   });
 
   it("setText chỉ sửa tab đang chọn", () => {
@@ -91,43 +90,6 @@ describe("tab kịch bản", () => {
     const b = addTab();
     setTabPos(b, 120);
     expect(useStore.getState().tabs.map((t) => t.pos)).toEqual([0, 120]);
-  });
-});
-
-describe("đồng hồ theo tab", () => {
-  it("bắt đầu, đặt lại riêng từng tab", () => {
-    const { addTab, startTimer, resetTimer } = useStore.getState();
-    const second = addTab();
-    startTimer(first.id, 1000);
-    startTimer(second, 2000);
-    resetTimer(first.id);
-    expect(useStore.getState().timers).toEqual({ [second]: 2000 });
-  });
-
-  it("đặt mốc giờ làm tròn xuống, không âm", () => {
-    const { setTabTarget } = useStore.getState();
-    setTabTarget(first.id, 90.7);
-    expect(activeTab(useStore.getState()).targetSec).toBe(90);
-    setTabTarget(first.id, -5);
-    expect(activeTab(useStore.getState()).targetSec).toBe(0);
-  });
-
-  it("đóng tab thì bỏ đồng hồ của tab đó", () => {
-    const { addTab, startTimer, closeTab } = useStore.getState();
-    const second = addTab();
-    startTimer(second, 1000);
-    closeTab(second);
-    expect(useStore.getState().timers).toEqual({});
-  });
-
-  it("activeTimer theo tab đang chọn", () => {
-    const { addTab, startTimer, setTabTarget, selectTab } = useStore.getState();
-    const second = addTab();
-    startTimer(first.id, 1000);
-    setTabTarget(second, 60);
-    expect(activeTimer(useStore.getState())).toEqual({ startedAt: 1000, targetSec: 0 });
-    selectTab(second);
-    expect(activeTimer(useStore.getState())).toEqual({ startedAt: null, targetSec: 60 });
   });
 });
 

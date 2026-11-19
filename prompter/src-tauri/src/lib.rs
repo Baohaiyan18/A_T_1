@@ -59,7 +59,7 @@ pub fn run() {
         .setup(|app| {
             if let Some(main) = app.get_webview_window("main") {
                 let version = &app.package_info().version;
-                let _ = main.set_title(&format!("Prompter {version}"));
+                let _ = main.set_title(&format!("Rec Media {version}"));
             }
             monitors::spawn_watcher(app.handle().clone());
             Ok(())

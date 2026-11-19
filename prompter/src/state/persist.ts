@@ -1,6 +1,7 @@
 import type { Storage } from "../bridge/storage";
 import { SAMPLE_SCRIPT } from "../script/parse";
 import { sanitizeSettings } from "../settings";
+import { sanitizeTickers } from "../ticker";
 import { newTab, useStore } from "./store";
 import type { ScriptTab } from "./store";
 
@@ -9,6 +10,7 @@ const KEY_SETTINGS = "settings";
 const KEY_SCRIPT = "script";
 const KEY_TABS = "tabs";
 const KEY_DISPLAY = "display";
+const KEY_TICKERS = "tickers";
 const SCRIPT_PERSIST_DEBOUNCE_MS = 400;
 
 export interface SavedTabs {
@@ -18,6 +20,9 @@ export interface SavedTabs {
 
 const isObject = (v: unknown): v is Record<string, unknown> => typeof v === "object" && v !== null;
 const nonNegative = (v: unknown) => (typeof v === "number" && Number.isFinite(v) && v >= 0 ? v : 0);
+
+/** Tên mặc định cũ "Kịch bản N" (trước v0.4.0) đổi thành "N"; tên người dùng tự đặt giữ nguyên. */
+const OLD_DEFAULT_NAME = /^Kịch bản (\d+)$/;
 
 /** Lọc dữ liệu tab đã lưu: bỏ tab hỏng hoặc trùng id; không còn tab nào thì trả `null`. */
 export function sanitizeTabs(raw: unknown): SavedTabs | null {
@@ -30,10 +35,9 @@ export function sanitizeTabs(raw: unknown): SavedTabs | null {
     seen.add(t.id);
     tabs.push({
       id: t.id,
-      name: t.name.trim(),
+      name: t.name.trim().replace(OLD_DEFAULT_NAME, "$1"),
       text: t.text,
       pos: nonNegative(t.pos),
-      targetSec: nonNegative(t.targetSec),
     });
   }
   if (!tabs.length) return null;
@@ -47,7 +51,7 @@ function loadTabs(rawTabs: unknown, rawText: unknown): SavedTabs | null {
   const saved = sanitizeTabs(rawTabs);
   if (saved) return saved;
   if (typeof rawText !== "string") return null;
-  const tab = newTab("Kịch bản 1", rawText);
+  const tab = newTab("1", rawText);
   return { tabs: [tab], activeId: tab.id };
 }
 
@@ -65,17 +69,19 @@ export async function initPersistence(
   options: PersistOptions = {},
 ): Promise<() => void> {
   const debounceMs = options.scriptDebounceMs ?? SCRIPT_PERSIST_DEBOUNCE_MS;
-  const [rawSettings, rawTabs, rawText, rawDisplay] = await Promise.all([
+  const [rawSettings, rawTabs, rawText, rawDisplay, rawTickers] = await Promise.all([
     storage.get(KEY_SETTINGS),
     storage.get(KEY_TABS),
     storage.get(KEY_SCRIPT),
     storage.get(KEY_DISPLAY),
+    storage.get(KEY_TICKERS),
   ]);
-  const first = newTab("Kịch bản 1", SAMPLE_SCRIPT);
+  const first = newTab("1", SAMPLE_SCRIPT);
   useStore.setState({
     settings: sanitizeSettings(rawSettings),
     ...(loadTabs(rawTabs, rawText) ?? { tabs: [first], activeId: first.id }),
     displayKey: typeof rawDisplay === "string" ? rawDisplay : null,
+    tickers: sanitizeTickers(rawTickers),
   });
 
   let scriptTimer: ReturnType<typeof setTimeout> | undefined;
@@ -95,6 +101,7 @@ export async function initPersistence(
   const unsubscribe = useStore.subscribe((state, prev) => {
     if (state.settings !== prev.settings) void storage.set(KEY_SETTINGS, state.settings);
     if (state.displayKey !== prev.displayKey) void storage.set(KEY_DISPLAY, state.displayKey);
+    if (state.tickers !== prev.tickers) void storage.set(KEY_TICKERS, state.tickers);
     if (state.tabs !== prev.tabs || state.activeId !== prev.activeId) {
       if (debounceMs <= 0) {
         writeTabs();

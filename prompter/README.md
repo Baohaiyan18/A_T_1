@@ -5,24 +5,22 @@ Xây bằng Tauri 2 (Rust) và React + TypeScript.
 
 ## Sử dụng
 
-**Cú pháp kịch bản** (màu, đậm, nghiêng chỉ có hiệu lực trong một dòng):
-
-| Cú pháp | Hiển thị |
-|---|---|
-| `## Tiêu đề` | Dòng tiêu đề |
-| `[ghi chú]` | Ghi chú dàn dựng (luôn dùng màu ghi chú) |
-| `{1}chữ{/}` … `{5}chữ{/}` | Màu nhấn 1 đỏ · 2 cam · 3 vàng · 4 xanh lá · 5 xanh dương; thiếu `{/}` thì tự đóng cuối dòng |
-| `**chữ**` / `*chữ*` | Đậm / nghiêng |
-
-- **Tab kịch bản:** mỗi tab nhớ vị trí đọc và mốc giờ riêng, tự lưu. Nhấp đúp để đổi tên, "Mở .txt"
-  mở tab mới, đóng tab phải xác nhận. Chuyển tab thì tự dừng chạy; màn chiếu theo tab đang chọn.
-- **Khung soạn thảo:** chế độ MD (gõ) và Preview (bản đọc đã định dạng).
-- **Đồng hồ:** bắt đầu khi chữ thực sự chạy, vẫn chạy khi tạm dừng. Góc trên-phải xem trước và màn chiếu
-  hiện thời gian còn lại (xanh) hoặc quá giờ (đỏ, `+mm:ss`). Bấm vào đồng hồ trên khung xem trước để
-  đặt mốc giờ (`0` = chỉ hiện thời gian đã đọc) hoặc đặt lại. Không lưu khi tắt app; mốc giờ thì có lưu.
-- **Cài đặt:** nút ⚙ cuối thanh tiêu đề khung Xem trước mở ngăn cài đặt hiển thị (có công tắc ẩn đồng hồ
-  trên màn chiếu); tốc độ nằm cạnh nút CHẠY; nút ⚙ trên thanh đầu trang mở cài đặt ứng dụng
-  (Sáng/Tối, đếm ngược, phím tắt, kiểm tra cập nhật).
+- **Khung soạn thảo trực quan:** chữ hiện luôn màu/đậm/nghiêng như trên màn chiếu. Bôi đen chữ rồi bấm
+  nút **B** / **I** / 5 màu nhấn (1 đỏ · 2 cam · 3 vàng · 4 xanh lá · 5 xanh dương) / bỏ màu trên ô soạn
+  thảo; nút sáng lên theo định dạng tại con trỏ. `Ctrl+B`, `Ctrl+I`, `Ctrl+Z`, `Ctrl+Y` dùng được.
+  Dòng bắt đầu bằng `## ` là tiêu đề, chữ trong `[ngoặc vuông]` là ghi chú dàn dựng.
+- **File .txt:** vẫn lưu định dạng bằng thẻ trong dòng: `{1}chữ{/}` … `{5}chữ{/}`, `**đậm**`, `*nghiêng*`
+  (ký tự `*`, `\`, `{1}` gõ thường được lưu dạng `\*`, `\\`, `\{1}`). Dán chữ có thẻ vào ô soạn thảo thì
+  giữ định dạng.
+- **Tab kịch bản:** đặt tên theo số `1`, `2`…; mỗi tab nhớ vị trí đọc riêng, tự lưu. Nhấp đúp để đổi tên,
+  "Mở .txt" mở tab mới, đóng tab phải xác nhận. Chuyển tab thì tự dừng chạy; màn chiếu theo tab đang chọn.
+- **Chữ chạy:** nút chữ chạy trên thanh tiêu đề khung Xem trước mở ngăn thêm/sửa/xóa nhiều lớp chữ chạy
+  đè lên màn chiếu. Mỗi lớp bật/tắt riêng, chạy ngang (phải → trái) hoặc dọc (dưới → lên), chỉnh tốc độ,
+  cỡ chữ, độ dài dải, màu chữ/nền, số lượt (0 = lặp vô hạn), nút chạy lại. Kéo dải chữ trên khung xem
+  trước để đặt vị trí. Sửa lúc đang chiếu thì màn chiếu đổi ngay.
+- **Cài đặt:** `Esc` hoặc nút ⚙ cuối thanh tiêu đề khung Xem trước bật/tắt ngăn cài đặt hiển thị; tốc độ
+  nằm cạnh nút CHẠY; nút ⚙ trên thanh đầu trang mở cài đặt ứng dụng (Sáng/Tối, đếm ngược, phím tắt,
+  kiểm tra cập nhật).
 
 ## Phát triển
 
@@ -46,7 +44,8 @@ Khi chạy trong trình duyệt, lưu trữ dùng localStorage và màn chiếu 
 - `src/components`, `src/windows` — giao diện; `ControlWindow` là màn điều khiển, `OutputWindow` là màn chiếu.
 - `src/bridge` — lớp nối với Tauri, có nhánh dự phòng cho trình duyệt.
 - `src/state` — store Zustand, lưu trữ, trạng thái cập nhật.
-- `src/lib` — hàm thuần: định dạng, màu, đồng hồ (`timer.ts`).
+- `src/lib` — hàm thuần: định dạng, màu.
+- `src/ticker.ts` — dữ liệu và bước chạy của lớp chữ chạy.
 - `src-tauri/src` — lệnh Rust: màn hình (`monitors.rs`), cửa sổ chiếu (`output.rs`),
   file kịch bản (`script_io.rs`), cập nhật (`update.rs`), font hệ thống (`fonts.rs`).
 

@@ -6,6 +6,7 @@ import {
   useDeferredValue,
   useLayoutEffect,
   useMemo,
+  useEffect,
   useRef,
   useState,
 } from "react";
@@ -13,12 +14,14 @@ import type { KeyboardEvent, PointerEvent, RefObject } from "react";
 import { IconButton } from "@astryxdesign/core/IconButton";
 import { Theme } from "@astryxdesign/core/theme";
 import { AppSettingsDialog } from "../components/AppSettingsDialog";
-import { DISPLAY_SETTINGS_ID, DisplaySettingsDrawer } from "../components/DisplaySettingsDrawer";
+import { Drawer } from "../components/Drawer";
 import { Footer } from "../components/Footer";
 import { Icon } from "../components/Icon";
 import { Preview } from "../components/Preview";
 import { ProjectionBar } from "../components/ProjectionBar";
 import { ScriptEditor } from "../components/ScriptEditor";
+import { SettingsPanel } from "../components/SettingsPanel";
+import { TickerPanel } from "../components/TickerPanel";
 import type { StageHandle } from "../components/Stage";
 import { Progress, Transport } from "../components/Transport";
 import { usePrompter } from "../hooks/usePrompter";
@@ -60,6 +63,10 @@ const ThemeToggle = memo(function ThemeToggle() {
     />
   );
 });
+
+type Panel = "display" | "ticker";
+const DISPLAY_SETTINGS_ID = "display-settings";
+const TICKER_PANEL_ID = "ticker-panel";
 
 const LAYOUT_KEY = "prompter.layout";
 const DEFAULT_SPLIT = { x: 44 };
@@ -206,9 +213,14 @@ export function ControlWindow() {
   const prompter = usePrompter(stage);
   const mainRef = useRef<HTMLElement>(null);
   const [split, setSplit] = useState(readLayout);
-  const [displayOpen, setDisplayOpen] = useState(false);
+  const [panel, setPanel] = useState<Panel | null>(null);
+  const panelRef = useRef(panel);
   const [appOpen, setAppOpen] = useState(false);
-  const gearRef = useRef<HTMLButtonElement>(null);
+  const pvAreaRef = useRef<HTMLDivElement>(null);
+
+  useLayoutEffect(() => {
+    panelRef.current = panel;
+  }, [panel]);
 
   useLayoutEffect(() => {
     mainRef.current?.style.setProperty("--split-x", String(split.x));
@@ -220,21 +232,45 @@ export function ControlWindow() {
     setSplit(next);
   }, []);
 
-  const closeDisplay = useCallback(() => {
-    setDisplayOpen(false);
-    gearRef.current?.focus({ preventScroll: true });
+  /**
+   * Đóng ngăn đang mở. Focus đang trong ngăn thì chuyển sang khung xem trước (không về nút mở ngăn:
+   * tooltip của nút sẽ nuốt lần nhấn Esc kế tiếp, Esc không mở lại được ngay).
+   */
+  const closePanel = useCallback(() => {
+    if (!panelRef.current) return;
+    const area = pvAreaRef.current;
+    const focusInside = !!area?.querySelector(".ds-drawer")?.contains(document.activeElement);
+    setPanel(null);
+    if (focusInside) area?.querySelector<HTMLElement>(".pvbox")?.focus({ preventScroll: true });
   }, []);
+
+  const togglePanel = (name: Panel) => (panel === name ? closePanel() : setPanel(name));
+
+  // Esc bật/tắt ngăn cài đặt hiển thị (đang mở ngăn chữ chạy thì đóng ngăn đó). Nghe ở `window`
+  // (chạy sau cùng): popover/bộ chọn/ô đổi tên tab xử lý Esc trước và đánh dấu `defaultPrevented`.
+  useEffect(() => {
+    const onKey = (e: globalThis.KeyboardEvent) => {
+      if (e.key !== "Escape" || e.defaultPrevented) return;
+      if (document.querySelector(".modal, dialog[open]")) return;
+      e.preventDefault();
+      if (panelRef.current) closePanel();
+      else setPanel("display");
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [closePanel]);
 
   return (
     <Theme theme={prompterTheme} mode={mode}>
       <div className="ctl">
         <header>
           <div className="brand">
-            <img className="brand-logo" src="/logo.png" alt="" />
-            <div className="brand-text">
-              Prompter
-              <small>Phần mềm máy nhắc chữ</small>
-            </div>
+            <img
+              className="brand-wordmark"
+              src={mode === "dark" ? "/brand-dark.png" : "/brand-light.png"}
+              alt="Rec Media"
+            />
+            <small className="brand-sub">Phần mềm máy nhắc chữ</small>
           </div>
           <ProjectionBar />
           <ThemeToggle />
@@ -265,22 +301,42 @@ export function ControlWindow() {
           <section className="card right" aria-label="Xem trước và điều khiển">
             <div className="bar">
               <h3>Xem trước (giống màn chiếu, không lật gương)</h3>
-              <span className="hint">Nhấp vào dòng để đưa lên vạch đọc · lăn chuột để cuộn</span>
+              <span className="hint">
+                Nhấp vào dòng để đưa lên vạch đọc · nhấp đúp để sửa chữ · lăn chuột để cuộn
+              </span>
               <IconButton
-                ref={gearRef}
                 size="sm"
-                variant={displayOpen ? "secondary" : "ghost"}
+                variant={panel === "ticker" ? "secondary" : "ghost"}
+                label="Chữ chạy"
+                tooltip="Chữ chạy"
+                aria-expanded={panel === "ticker"}
+                aria-controls={panel === "ticker" ? TICKER_PANEL_ID : undefined}
+                icon={<Icon name="ticker" size={16} />}
+                onClick={() => togglePanel("ticker")}
+              />
+              <IconButton
+                size="sm"
+                variant={panel === "display" ? "secondary" : "ghost"}
                 label="Cài đặt hiển thị"
-                tooltip="Cài đặt hiển thị"
-                aria-expanded={displayOpen}
-                aria-controls={displayOpen ? DISPLAY_SETTINGS_ID : undefined}
+                tooltip="Cài đặt hiển thị (Esc)"
+                aria-expanded={panel === "display"}
+                aria-controls={panel === "display" ? DISPLAY_SETTINGS_ID : undefined}
                 icon={<Icon name="settings" size={16} />}
-                onClick={() => (displayOpen ? closeDisplay() : setDisplayOpen(true))}
+                onClick={() => togglePanel("display")}
               />
             </div>
-            <div className="pv-area">
+            <div className="pv-area" ref={pvAreaRef}>
               <LivePreview stageRef={stage} prompter={prompter} />
-              {displayOpen && <DisplaySettingsDrawer onClose={closeDisplay} />}
+              {panel === "display" && (
+                <Drawer id={DISPLAY_SETTINGS_ID} title="Cài đặt hiển thị" onClose={closePanel}>
+                  <SettingsPanel />
+                </Drawer>
+              )}
+              {panel === "ticker" && (
+                <Drawer id={TICKER_PANEL_ID} title="Chữ chạy" onClose={closePanel}>
+                  <TickerPanel />
+                </Drawer>
+              )}
             </div>
             <Progress prompter={prompter} />
             <Transport prompter={prompter} />

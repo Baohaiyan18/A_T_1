@@ -1,9 +1,10 @@
-import { memo, useCallback, useImperativeHandle, useLayoutEffect, useMemo, useRef } from "react";
-import type { Ref, RefObject } from "react";
+import { memo, useImperativeHandle, useLayoutEffect, useMemo, useRef } from "react";
+import type { Ref } from "react";
 import { setClassRule } from "../lib/dynamicSheet";
-import type { TimerView } from "../lib/timer";
 import type { Line } from "../script/parse";
 import type { Settings } from "../settings";
+import type { Ticker } from "../ticker";
+import { TickerLayer } from "./TickerLayer";
 import "./Stage.css";
 
 /** Điều khiển trực tiếp vùng hiển thị, gọi từ vòng lặp requestAnimationFrame. */
@@ -12,8 +13,6 @@ export interface StageHandle {
   render(pos: number): void;
   /** Hiện số đếm ngược; `seconds <= 0` thì ẩn. */
   showCount(seconds: number): void;
-  /** Hiện đồng hồ góc trên-phải; `null` thì ẩn. Chỉ ghi DOM khi nội dung đổi. */
-  showTimer(view: TimerView | null): void;
   /** Vị trí cuộn lớn nhất (px màn chiếu). */
   maxPos(): number;
   /** Vị trí cuộn đưa dòng thứ `index` lên vạch đọc (px màn chiếu). */
@@ -25,15 +24,17 @@ interface Props {
   settings: Settings;
   /** Hệ số thu nhỏ so với màn chiếu thật (màn chiếu = 1). */
   scale: number;
+  /** Các lớp chữ chạy vẽ đè lên chữ, lật gương cùng chữ. */
+  tickers: Ticker[];
+  /** Có thì kéo được dải chữ chạy để đổi vị trí (khung xem trước); `x`, `y` theo %. */
+  onTickerMove?: (id: string, x: number, y: number) => void;
   /** Có áp dụng lật gương hay không (xem trước thì không). */
   mirror?: boolean;
   className?: string;
-  /** Có thì đồng hồ là nút bấm (khung xem trước), gắn vào ref này. */
-  timerButtonRef?: RefObject<HTMLButtonElement | null>;
   ref?: Ref<StageHandle>;
 }
 
-/** Dựng các dòng kịch bản; dùng chung cho vùng chạy chữ và bản đọc `ScriptReader`. */
+/** Dựng các dòng kịch bản của vùng chạy chữ. */
 export const Lines = memo(function Lines({ lines }: { lines: Line[] }) {
   return (
     <>
@@ -75,31 +76,20 @@ export const Lines = memo(function Lines({ lines }: { lines: Line[] }) {
   );
 });
 
-/** Cỡ chữ đồng hồ theo chiều cao khung. */
-const TIMER_FONT_RATIO = 0.06;
-
 export function Stage({
   lines,
   settings: s,
+  tickers,
+  onTickerMove,
   scale,
   mirror = true,
   className,
-  timerButtonRef,
   ref,
 }: Props) {
   const rootRef = useRef<HTMLDivElement>(null);
   const scrollerRef = useRef<HTMLDivElement>(null);
   const txtRef = useRef<HTMLDivElement>(null);
   const countRef = useRef<HTMLDivElement>(null);
-  const timerRef = useRef<HTMLElement | null>(null);
-  // Hàm ref cố định để React không gỡ/gắn lại nút đồng hồ mỗi lần dựng lại.
-  const setTimerEl = useCallback(
-    (el: HTMLElement | null) => {
-      timerRef.current = el;
-      if (timerButtonRef) timerButtonRef.current = el as HTMLButtonElement | null;
-    },
-    [timerButtonRef],
-  );
   const posRef = useRef(0);
 
   const scope = className ? `.stage.${className}` : ".stage";
@@ -112,7 +102,6 @@ export function Stage({
     lastY: "",
     lastCountText: "",
     countVisible: false,
-    lastTimer: "",
   });
 
   const handle = useMemo<StageHandle>(() => {
@@ -158,21 +147,6 @@ export function Stage({
           el.classList.remove("show");
         }
       },
-      showTimer(view) {
-        const el = timerRef.current;
-        if (!el) return;
-        const m = metrics.current;
-        const key = view ? `${view.state}|${view.text}|${view.elapsed}` : "";
-        if (m.lastTimer === key) return;
-        m.lastTimer = key;
-        if (!view) {
-          el.className = "timer";
-          return;
-        }
-        el.className = `timer show ${view.state}`;
-        el.textContent = view.text;
-        el.title = `Đã đọc ${view.elapsed}${el instanceof HTMLButtonElement ? " · bấm để đặt mốc giờ" : ""}`;
-      },
       maxPos() {
         const txt = txtRef.current;
         if (!txt) return 0;
@@ -198,8 +172,6 @@ export function Stage({
       metrics.current.rootH = root.clientHeight;
       metrics.current.txtH = txt.offsetHeight;
       metrics.current.lastY = "";
-      if (timerRef.current)
-        timerRef.current.style.fontSize = `${(root.clientHeight * TIMER_FONT_RATIO).toFixed(1)}px`;
       handle.render(posRef.current);
     };
     syncMetrics();
@@ -277,12 +249,8 @@ export function Stage({
           <i />
           <i />
         </div>
+        <TickerLayer tickers={tickers} scale={scale} scope={scope} onMove={onTickerMove} />
         <div ref={countRef} className="count" />
-        {timerButtonRef ? (
-          <button type="button" className="timer" ref={setTimerEl} />
-        ) : (
-          <div ref={setTimerEl} className="timer" aria-hidden="true" />
-        )}
       </div>
     </div>
   );

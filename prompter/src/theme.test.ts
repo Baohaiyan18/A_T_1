@@ -25,9 +25,9 @@ function contrastRatio(a: string, b: string): number {
 }
 
 describe("prompterTheme", () => {
-  it("uses logo Indigo (#5664ae) in light mode and Cyan (#00b3e4) in dark mode", () => {
+  it("uses Rec Media brand red as accent", () => {
     expect(prompterTheme.name).toBe("prompter");
-    expect(parseLightDark(prompterTheme.tokens["--color-accent"])).toEqual(["#5664ae", "#00b3e4"]);
+    expect(parseLightDark(prompterTheme.tokens["--color-accent"])).toEqual(["#be1f2c", "#d92b3a"]);
   });
 
   it("keeps WCAG AA (>= 4.5:1) contrast for accent, status, and muted surface pairs", () => {
@@ -44,10 +44,11 @@ describe("prompterTheme", () => {
     };
 
     const [onAccentL, onAccentD] = parseLightDark(t["--color-on-accent"]);
+    // Nền nút đỏ với chữ trắng; chữ màu nhấn dùng token riêng để đọc được trên nền tối.
     checkPair("--color-accent", onAccentL, onAccentD);
-    checkPair("--color-accent", surfaceL, surfaceD);
-    checkPair("--color-accent", bodyL, bodyD);
-    checkPair("--color-accent", mutedL, mutedD);
+    checkPair("--color-text-accent", surfaceL, surfaceD);
+    checkPair("--color-text-accent", bodyL, bodyD);
+    checkPair("--color-text-accent", mutedL, mutedD);
 
     const [onSuccessL, onSuccessD] = parseLightDark(t["--color-on-success"]);
     checkPair("--color-success", onSuccessL, onSuccessD);

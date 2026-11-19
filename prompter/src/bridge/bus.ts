@@ -3,13 +3,7 @@ import { emitTo } from "@tauri-apps/api/event";
 import { getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow";
 import type { Command } from "../engine/engine";
 import type { Settings } from "../settings";
-
-/** Đồng hồ của tab đang chọn: màn chiếu tự tính thời gian theo `Date.now()`, không cần gửi mỗi giây. */
-export interface TimerSync {
-  /** `Date.now()` lúc chữ bắt đầu chạy; `null` = chưa chạy. */
-  startedAt: number | null;
-  targetSec: number;
-}
+import type { Ticker } from "../ticker";
 
 /** Tin từ màn điều khiển gửi sang màn chiếu. */
 export type CtlMsg =
@@ -19,15 +13,14 @@ export type CtlMsg =
       text: string;
       pos: number;
       playing: boolean;
-      timer: TimerSync;
+      tickers: Ticker[];
     }
   | { type: "settings"; settings: Settings }
   | { type: "script"; text: string }
   /** Chuyển tab: nội dung và vị trí đi cùng nhau để dựng chữ xong mới đặt vị trí. */
   | { type: "load"; text: string; pos: number }
   | { type: "cmd"; cmd: Command }
-  /** Gửi khi đồng hồ bắt đầu, đặt lại, đổi mốc hoặc chuyển tab. */
-  | ({ type: "timer" } & TimerSync);
+  | { type: "tickers"; tickers: Ticker[] };
 
 /** Tin từ màn chiếu gửi về màn điều khiển. */
 export type OutMsg =

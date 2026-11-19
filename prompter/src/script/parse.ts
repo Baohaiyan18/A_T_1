@@ -14,14 +14,17 @@ export interface Segment {
 export type Line =
   { kind: "gap" } | { kind: "head"; text: string } | { kind: "text"; segments: Segment[] };
 
-/** Ghi chú `[...]`, mở màu `{1}`–`{5}`, đóng màu `{/}`, bật/tắt đậm `**`, bật/tắt nghiêng `*`. */
-const TOKEN = /\[[^\]]*\]|\{[1-5]\}|\{\/\}|\*\*|\*/g;
+/**
+ * Ký tự thoát `\\`, `\*`, `\{` (chữ thường, không phải thẻ), ghi chú `[...]`, mở màu `{1}`–`{5}`,
+ * đóng màu `{/}`, bật/tắt đậm `**`, bật/tắt nghiêng `*`.
+ */
+const TOKEN = /\\[\\*{]|\[[^\]]*\]|\{[1-5]\}|\{\/\}|\*\*|\*/g;
 
 /**
  * Tách một dòng thường thành các đoạn. Định dạng chỉ có hiệu lực trong dòng:
  * thẻ chưa đóng tự đóng ở cuối dòng. Ghi chú luôn giữ màu ghi chú, không nhận định dạng.
  */
-function splitLine(line: string): Segment[] {
+export function splitLine(line: string): Segment[] {
   const segments: Segment[] = [];
   let color: ColorIndex | undefined;
   let bold = false;
@@ -51,7 +54,8 @@ function splitLine(line: string): Segment[] {
     pushText(line.slice(last, m.index));
     last = m.index + m[0].length;
     const tok = m[0];
-    if (tok[0] === "[") segments.push({ kind: "cue", text: tok });
+    if (tok[0] === "\\") pushText(tok[1]);
+    else if (tok[0] === "[") segments.push({ kind: "cue", text: tok });
     else if (tok === "{/}") color = undefined;
     else if (tok === "**") bold = !bold;
     else if (tok === "*") italic = !italic;
@@ -93,7 +97,7 @@ export const SAMPLE_SCRIPT = [
   "## HƯỚNG DẪN NHANH",
   "Dòng bắt đầu bằng hai dấu thăng sẽ hiện thành tiêu đề màu xanh.",
   "Phần nằm trong [ngoặc vuông] là ghi chú dàn dựng, hiện màu vàng – MC không đọc.",
-  "Tô màu chữ bằng {1}đỏ{/}, {2}cam{/}, {3}vàng{/}, {4}xanh lá{/}, {5}xanh dương{/}.",
+  "Bôi đen chữ rồi bấm nút trên ô soạn thảo để tô {1}đỏ{/}, {2}cam{/}, {3}vàng{/}, {4}xanh lá{/}, {5}xanh dương{/}.",
   "Nhấn mạnh bằng **chữ đậm** hoặc *chữ nghiêng*, có thể kết hợp: {1}**rất quan trọng**{/}.",
   "Nhấn phím cách để chạy hoặc tạm dừng, mũi tên lên xuống để tăng giảm tốc độ.",
   "",

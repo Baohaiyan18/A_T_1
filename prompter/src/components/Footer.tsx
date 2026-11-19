@@ -29,7 +29,7 @@ function AboutDialog({
   return (
     <Dialog isOpen={isOpen} onOpenChange={onOpenChange} width={480} purpose="info">
       <DialogHeader
-        title="Prompter"
+        title="Rec Media"
         subtitle="Phần mềm máy nhắc chữ chuyên nghiệp"
         startContent={<img className="brand-logo" src="/logo.png" alt="" />}
         onOpenChange={onOpenChange}
@@ -77,7 +77,7 @@ export const Footer = memo(function Footer() {
         setInfo(appInfo);
         if (appInfo && (await noteVersion(await openStorage(), appInfo.version))) {
           toast({
-            body: `Đã cập nhật Prompter lên phiên bản ${appInfo.version}`,
+            body: `Đã cập nhật Rec Media lên phiên bản ${appInfo.version}`,
             uniqueID: "app-updated",
           });
         }
@@ -97,7 +97,7 @@ export const Footer = memo(function Footer() {
   return (
     <footer>
       <span className="fl">
-        <b>Prompter</b> v{info?.version ?? "dev"}
+        <b>Rec Media</b>
         {update && (
           <Button
             size="sm"

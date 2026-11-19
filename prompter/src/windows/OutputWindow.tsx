@@ -6,11 +6,10 @@ import { Stage } from "../components/Stage";
 import type { StageHandle } from "../components/Stage";
 import { createEngine, runCmd, step } from "../engine/engine";
 import { clamp } from "../lib/clamp";
-import { timerView } from "../lib/timer";
 import { parseScript } from "../script/parse";
 import { DEFAULT_SETTINGS, RANGES } from "../settings";
 import type { Settings } from "../settings";
-import type { TimerSync } from "../bridge/bus";
+import type { Ticker } from "../ticker";
 import { resolveKey } from "../shortcuts";
 import "./OutputWindow.css";
 
@@ -26,6 +25,7 @@ const IDLE_MS = 2000;
 export function OutputWindow() {
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
   const [text, setText] = useState("");
+  const [tickers, setTickers] = useState<Ticker[]>([]);
   const [hint, setHint] = useState(true);
   const [idle, setIdle] = useState(false);
   const lines = useMemo(() => parseScript(text), [text]);
@@ -33,7 +33,6 @@ export function OutputWindow() {
   const stage = useRef<StageHandle>(null);
   const engine = useRef(createEngine());
   const live = useRef(settings);
-  const timer = useRef<TimerSync>({ startedAt: null, targetSec: 0 });
   // Đã nhận dữ liệu khởi tạo từ màn điều khiển hay chưa.
   const ready = useRef(false);
 
@@ -50,11 +49,11 @@ export function OutputWindow() {
           flushSync(() => {
             setSettings(msg.settings);
             setText(msg.text);
+            setTickers(msg.tickers);
           });
           engine.current.pos = msg.pos;
           engine.current.playing = msg.playing;
           engine.current.counting = 0;
-          timer.current = msg.timer;
           break;
         case "load":
           flushSync(() => setText(msg.text));
@@ -69,11 +68,11 @@ export function OutputWindow() {
         case "script":
           setText(msg.text);
           break;
+        case "tickers":
+          setTickers(msg.tickers);
+          break;
         case "cmd":
           runCmd(engine.current, msg.cmd, max(), live.current);
-          break;
-        case "timer":
-          timer.current = { startedAt: msg.startedAt, targetSec: msg.targetSec };
           break;
       }
     });
@@ -106,12 +105,6 @@ export function OutputWindow() {
         step(e, dt, st.maxPos(), live.current);
         st.render(e.pos);
         st.showCount(e.counting);
-        const { startedAt, targetSec } = timer.current;
-        st.showTimer(
-          ready.current && live.current.showTimer
-            ? timerView(startedAt, targetSec, Date.now())
-            : null,
-        );
       }
       // Chưa khởi tạo thì không báo vị trí, kẻo màn điều khiển nhận vị trí 0 và mất chỗ đang đọc.
       if (ready.current && t - lastReport > REPORT_INTERVAL_MS) {
@@ -201,7 +194,14 @@ export function OutputWindow() {
 
   return (
     <div className={idle ? "out idle" : "out"}>
-      <Stage ref={stage} lines={lines} settings={settings} scale={1} className="out-stage" />
+      <Stage
+        ref={stage}
+        lines={lines}
+        settings={settings}
+        tickers={tickers}
+        scale={1}
+        className="out-stage"
+      />
       <div className={hint ? "out-hint" : "out-hint hide"}>
         Màn hình chiếu nhắc chữ · nhấn <b>Esc</b> để tắt chiếu
       </div>
