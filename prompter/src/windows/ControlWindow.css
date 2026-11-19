@@ -171,7 +171,7 @@ body.is-resizing-col * {
   align-items: flex-end;
   gap: var(--sp-1);
   padding: var(--sp-3) var(--sp-4) 0;
-  background: var(--panel2);
+  background: var(--panel);
   border-bottom: var(--border-w) solid var(--line);
 }
 
@@ -190,16 +190,19 @@ body.is-resizing-col * {
   max-width: 200px;
   border: var(--border-w) solid transparent;
   border-bottom: 0;
+  border-radius: var(--r-md) var(--r-md) 0 0;
   margin-bottom: calc(-1 * var(--border-w));
   color: var(--muted);
 }
 
 .tab:hover {
+  background: var(--panel-hover);
   color: var(--text);
 }
 
+/* Tab đang chọn cùng màu thanh định dạng bên dưới, che vạch kẻ để liền thành một khối. */
 .tab.active {
-  background: var(--panel);
+  background: var(--panel2);
   border-color: var(--line);
   color: var(--text);
 }
