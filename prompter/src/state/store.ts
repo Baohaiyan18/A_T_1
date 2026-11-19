@@ -73,6 +73,8 @@ interface State {
   closeTab: (id: string) => void;
   renameTab: (id: string, name: string) => void;
   selectTab: (id: string) => void;
+  /** Chuyển tab `id` tới vị trí `to` (chỉ số trong danh sách). */
+  moveTab: (id: string, to: number) => void;
   setTabPos: (id: string, pos: number) => void;
   addTicker: () => void;
   updateTicker: (id: string, patch: Partial<Omit<Ticker, "id">>) => void;
@@ -133,6 +135,14 @@ export const useStore = create<State>()((set, get) => ({
   selectTab: (id) => {
     if (get().tabs.some((t) => t.id === id)) set({ activeId: id });
   },
+  moveTab: (id, to) =>
+    set((s) => {
+      const from = s.tabs.findIndex((t) => t.id === id);
+      if (from < 0 || from === to || to < 0 || to >= s.tabs.length) return {};
+      const tabs = [...s.tabs];
+      tabs.splice(to, 0, ...tabs.splice(from, 1));
+      return { tabs };
+    }),
   setTabPos: (id, pos) => set((s) => ({ tabs: patchTab(s.tabs, id, { pos }) })),
   addTicker: () => set((s) => ({ tickers: [...s.tickers, newTicker()] })),
   updateTicker: (id, patch) =>

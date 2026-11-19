@@ -1,9 +1,12 @@
-import { memo, useEffect, useLayoutEffect, useRef } from "react";
+import { memo, useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { PointerEvent } from "react";
 import { clamp } from "../lib/clamp";
 import { setClassRule } from "../lib/dynamicSheet";
-import { advanceTicker } from "../ticker";
+import { advanceSeamless, advanceTicker } from "../ticker";
 import type { Ticker } from "../ticker";
+
+/** Giới hạn số lần lặp chữ để nội dung rất ngắn không tạo quá nhiều phần tử. */
+const MAX_FILL = 200;
 
 interface BandProps {
   t: Ticker;
@@ -25,22 +28,26 @@ const TickerBand = memo(function TickerBand({ t, scale, scope, onMove }: BandPro
   );
   const cls = `tk-${t.id}`;
   const horiz = t.dir === "h";
+  // Số lần lặp chữ khi chạy nối tiếp vô hạn: đủ phủ kín dải + một lần lặp (đo trong vòng chạy).
+  const [fill, setFill] = useState(1);
+  const fillRef = useRef(fill);
 
   useLayoutEffect(() => {
     live.current = { t, scale };
+    fillRef.current = fill;
   });
 
   useLayoutEffect(() => {
     setClassRule(
       `${scope} .${cls}`,
-      `left: ${t.x}%; top: ${t.y}%; ${horiz ? "width" : "height"}: ${t.len}%; font-size: ${(t.fontSize * scale).toFixed(2)}px; color: ${t.fg}; background: ${t.bgOn ? t.bg : "transparent"};`,
+      `left: ${t.x}%; top: ${t.y}%; ${horiz ? "width" : "height"}: ${t.len}%; font-size: ${(t.fontSize * scale).toFixed(2)}px; color: ${t.fg}; background: ${t.bgOn ? t.bg : "transparent"}; --tk-gap: ${(t.gap * scale).toFixed(2)}px;`,
     );
-  }, [scope, cls, horiz, t.x, t.y, t.len, t.fontSize, t.fg, t.bg, t.bgOn, scale]);
+  }, [scope, cls, horiz, t.x, t.y, t.len, t.fontSize, t.fg, t.bg, t.bgOn, t.gap, scale]);
 
   // Bật lại, bấm "Chạy lại" hoặc đổi số lượt thì chạy và đếm lượt lại từ đầu.
   useEffect(() => {
     run.current = { off: 0, pass: 0 };
-  }, [t.run, t.on, t.loops]);
+  }, [t.run, t.on, t.loops, t.seamless]);
 
   useEffect(() => {
     let raf = 0;
@@ -56,8 +63,21 @@ const TickerBand = memo(function TickerBand({ t, scale, scope, onMove }: BandPro
         const h = cur.dir === "h";
         const bandLen = h ? b.clientWidth : b.clientHeight;
         const textLen = h ? i.offsetWidth : i.offsetHeight;
-        const idle =
-          !cur.on || advanceTicker(run.current, cur.speed * k * dt, bandLen + textLen, cur.loops);
+        const dist = cur.speed * k * dt;
+        let idle = !cur.on;
+        if (!idle && cur.seamless && cur.loops === 0) {
+          const u = i.firstElementChild?.getBoundingClientRect();
+          const unit = u ? (h ? u.width : u.height) : 0;
+          const need = unit > 0 ? Math.min(MAX_FILL, Math.ceil(bandLen / unit) + 1) : 1;
+          if (need !== fillRef.current) {
+            fillRef.current = need;
+            setFill(need);
+          }
+          advanceSeamless(run.current, dist, bandLen, unit);
+        } else if (!idle) {
+          // Nối tiếp có số lượt: chữ đã lặp sẵn đủ số lượt, chạy qua dải một lần.
+          idle = advanceTicker(run.current, dist, bandLen + textLen, cur.seamless ? 1 : cur.loops);
+        }
         // Chữ đi từ mép cuối dải (phải/dưới) tới khi ra hẳn mép đầu (trái/trên).
         const p = (idle ? 0 : bandLen - run.current.off).toFixed(1);
         const key = `${idle}|${h}|${p}`;
@@ -106,6 +126,8 @@ const TickerBand = memo(function TickerBand({ t, scale, scope, onMove }: BandPro
       e.currentTarget.releasePointerCapture(e.pointerId);
   };
 
+  const label = horiz ? t.text.replace(/\s*\n\s*/g, "   ") : t.text;
+
   return (
     <div
       ref={band}
@@ -118,8 +140,15 @@ const TickerBand = memo(function TickerBand({ t, scale, scope, onMove }: BandPro
       // Không để cú nhấp rơi xuống khung xem trước (nhảy dòng).
       onClick={(e) => e.stopPropagation()}
     >
-      <div ref={inner} className="tk-text">
-        {horiz ? t.text.replace(/\s*\n\s*/g, "   ") : t.text}
+      <div ref={inner} className={t.seamless ? "tk-text seamless" : "tk-text"}>
+        {t.seamless
+          ? Array.from({ length: t.loops > 0 ? t.loops : fill }, (_, n) => (
+              <span key={n} className="tk-unit">
+                {label}
+                <span className="tk-sep">{t.sep}</span>
+              </span>
+            ))
+          : label}
       </div>
     </div>
   );

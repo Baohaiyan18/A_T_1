@@ -85,6 +85,17 @@ describe("tab kịch bản", () => {
     expect(activeTab(useStore.getState()).text).toBe("A");
   });
 
+  it("moveTab đổi chỗ tab, giữ tab đang chọn", () => {
+    const { addTab, moveTab } = useStore.getState();
+    const b = addTab("B");
+    const c = addTab("C");
+    moveTab(c, 0);
+    expect(useStore.getState().tabs.map((t) => t.id)).toEqual([c, first.id, b]);
+    moveTab(c, 9);
+    expect(useStore.getState().tabs.map((t) => t.id)).toEqual([c, first.id, b]);
+    expect(useStore.getState().activeId).toBe(first.id);
+  });
+
   it("setTabPos lưu vị trí cho đúng tab", () => {
     const { addTab, setTabPos } = useStore.getState();
     const b = addTab();

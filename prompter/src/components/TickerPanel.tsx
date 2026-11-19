@@ -6,7 +6,7 @@ import { Slider } from "@astryxdesign/core/Slider";
 import { Switch } from "@astryxdesign/core/Switch";
 import { TextArea } from "@astryxdesign/core/TextArea";
 import { useStore } from "../state/store";
-import { TICKER_RANGES } from "../ticker";
+import { TICKER_RANGES, TICKER_SEPARATORS } from "../ticker";
 import type { Ticker, TickerDir, TickerRangeKey } from "../ticker";
 import { ColorPicker } from "./ColorPicker";
 import { Icon } from "./Icon";
@@ -73,6 +73,44 @@ const TickerCard = memo(function TickerCard({ t, index }: { t: Ticker; index: nu
           <SegmentedControlItem value="v" label="Dọc (dưới → lên)" />
         </SegmentedControl>
       </div>
+      <Switch
+        label="Nối tiếp liên tục"
+        value={t.seamless}
+        size="sm"
+        labelPosition="start"
+        labelSpacing="spread"
+        width="100%"
+        onChange={(seamless: boolean) => set({ seamless })}
+      />
+      {t.seamless && (
+        <>
+          <div className="opt-field">
+            <span className="opt-label" aria-hidden="true">
+              Biểu tượng ngăn cách
+            </span>
+            <SegmentedControl
+              className="seg-match"
+              label="Biểu tượng ngăn cách"
+              layout="fill"
+              value={t.sep}
+              onChange={(sep) => set({ sep })}
+            >
+              {TICKER_SEPARATORS.map((sep) => (
+                <SegmentedControlItem key={sep} value={sep} label={sep || "Không"} />
+              ))}
+            </SegmentedControl>
+          </div>
+          <Slider
+            label="Khoảng cách ngăn cách"
+            {...TICKER_RANGES.gap}
+            value={t.gap}
+            valueDisplay="text"
+            formatValue={(v: number) => `${v}px`}
+            width="100%"
+            onChange={(gap: number) => set({ gap })}
+          />
+        </>
+      )}
       {SLIDERS.map(({ key, label, format }) => (
         <Slider
           key={key}

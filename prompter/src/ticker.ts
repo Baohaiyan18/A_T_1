@@ -3,6 +3,9 @@ import type { Range } from "./settings";
 /** Hướng chạy: ngang (phải → trái) hoặc dọc (dưới → lên). */
 export type TickerDir = "h" | "v";
 
+/** Biểu tượng ngăn cách giữa các lần lặp khi chạy nối tiếp ("" = không có). */
+export const TICKER_SEPARATORS = ["•", "★", "◆", "|", ""] as const;
+
 /** Một lớp chữ chạy đè lên màn chiếu. Vị trí, độ dài tính theo % màn chiếu; cỡ chữ, tốc độ theo px màn chiếu. */
 export interface Ticker {
   id: string;
@@ -23,6 +26,12 @@ export interface Ticker {
   bg: string;
   /** Có tô nền cho dải chữ hay không. */
   bgOn: boolean;
+  /** Chạy nối tiếp: nội dung lặp liền nhau, không chờ chạy hết dải mới lặp. */
+  seamless: boolean;
+  /** Biểu tượng ngăn cách (một trong `TICKER_SEPARATORS`). */
+  sep: string;
+  /** Khoảng cách mỗi bên biểu tượng ngăn cách, px màn chiếu. */
+  gap: number;
   /** Tăng lên để chạy lại từ đầu. */
   run: number;
 }
@@ -34,6 +43,7 @@ export const TICKER_RANGES = {
   speed: { min: 20, max: 600, step: 10 },
   loops: { min: 0, max: 50, step: 1 },
   fontSize: { min: 16, max: 200, step: 2 },
+  gap: { min: 0, max: 200, step: 2 },
 } satisfies Record<string, Range>;
 
 export type TickerRangeKey = keyof typeof TICKER_RANGES;
@@ -53,6 +63,9 @@ export function newTicker(): Ticker {
     fg: "#ffffff",
     bg: "#000000",
     bgOn: true,
+    seamless: false,
+    sep: "•",
+    gap: 40,
     run: 0,
   };
 }
@@ -94,6 +107,9 @@ export function sanitizeTickers(raw: unknown): Ticker[] {
       fg: color("fg"),
       bg: color("bg"),
       bgOn: typeof t.bgOn === "boolean" ? t.bgOn : d.bgOn,
+      seamless: typeof t.seamless === "boolean" ? t.seamless : d.seamless,
+      sep: (TICKER_SEPARATORS as readonly unknown[]).includes(t.sep) ? (t.sep as string) : d.sep,
+      gap: num("gap"),
     });
   }
   return out;
@@ -123,4 +139,13 @@ export function advanceTicker(run: TickerRun, dist: number, span: number, loops:
     return true;
   }
   return false;
+}
+
+/**
+ * Chạy nối tiếp vô hạn: chữ vào từ mép cuối dải (`off < band`), sau đó quãng chạy quay vòng theo
+ * độ dài một lần lặp `unit` (chữ + ngăn cách) để vị trí `band - off` luôn trong (-unit, 0].
+ */
+export function advanceSeamless(run: TickerRun, dist: number, band: number, unit: number): void {
+  run.off += dist;
+  if (unit > 0 && run.off >= band + unit) run.off = band + ((run.off - band) % unit);
 }

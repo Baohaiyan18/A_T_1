@@ -199,6 +199,25 @@
   white-space: pre-wrap;
 }
 
+/* Chạy nối tiếp: các lần lặp nằm liền nhau, ngăn cách bằng biểu tượng có khoảng cách hai bên. */
+.stage .tk.h .tk-text.seamless {
+  padding: 0;
+}
+
+.stage .tk.h .tk-sep {
+  padding: 0 var(--tk-gap);
+}
+
+.stage .tk.v .tk-unit,
+.stage .tk.v .tk-sep {
+  display: block;
+}
+
+.stage .tk.v .tk-sep {
+  padding: var(--tk-gap) 0;
+  text-align: center;
+}
+
 /* Đang tắt hoặc đã chạy đủ số lượt: màn chiếu ẩn, khung xem trước hiện mờ để còn kéo vị trí. */
 .stage .tk.idle {
   visibility: hidden;

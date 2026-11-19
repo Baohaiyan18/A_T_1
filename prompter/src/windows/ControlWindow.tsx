@@ -299,11 +299,8 @@ export function ControlWindow() {
           />
 
           <section className="card right" aria-label="Xem trước và điều khiển">
-            <div className="bar">
+            <div className="bar pv-bar">
               <h3>Xem trước (giống màn chiếu, không lật gương)</h3>
-              <span className="hint">
-                Nhấp vào dòng để đưa lên vạch đọc · nhấp đúp để sửa chữ · lăn chuột để cuộn
-              </span>
               <IconButton
                 size="sm"
                 variant={panel === "ticker" ? "secondary" : "ghost"}
